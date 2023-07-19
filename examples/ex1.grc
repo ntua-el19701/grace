@@ -1,0 +1,13 @@
+fun main (x  : int; peos : char; peomouris : char[12]) : nothing
+    
+    fun p () : int
+    var r : int;
+{
+
+    x<-2;
+    return 1;
+}
+{
+    r<- 2;
+    peomouris <- peomouris + 1;
+}
