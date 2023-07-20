@@ -1,0 +1,10 @@
+fun main() : nothing
+var a : char;
+    fun peos(c : char[]) : char
+    {
+        c <- "aa";
+        return c;
+    }
+{
+
+}

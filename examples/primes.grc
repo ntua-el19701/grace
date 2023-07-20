@@ -4,7 +4,7 @@ fun main () : nothing
       var i : int;
       var c :char;  
    {
-      if n < 0            then return  prime(n); $here we are
+      if n < 0            then return  prime(-n); 
       else if n < 2       then return 0;
       else if n = 2       then return 1;
       else if n mod 2 = 0 then return 0;
@@ -19,6 +19,7 @@ fun main () : nothing
       }
       
    }
+   
    
    var limit, number, counter : int;
    

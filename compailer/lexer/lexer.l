@@ -17,7 +17,7 @@ int lineno = 1;
 
 L [a-z|A-Z]
 D [0-9]
-W [ \t\n\r]
+W [ \t\r]
 
 %x COMMENT
 %option noyywrap
@@ -60,7 +60,7 @@ W [ \t\n\r]
 
 
 \"(\\.|[^"\\\n])*\"   { yylval.const_str = strdup(yytext); return T_const_string; } // for const string
-"$"[^\n\$]([^\n])*\n  {/* single line comments*/ ++lineno;}
+"$"[^\n\$]([^\n])*\n  {/* single line comments*/ lineno++;}
 
 "$$"                  {BEGIN(COMMENT);} 
 <COMMENT>"$$"         {BEGIN(INITIAL);}
@@ -68,8 +68,7 @@ W [ \t\n\r]
 <COMMENT>[^\n"$$"]*   {/*nothing*/}
 <COMMENT><<EOF>>      { fprintf(stderr, "Unfinished comment at EOF\n"); exit(1); }
 
-
-\n    { /* increment line number for each newline character */ lineno ++;}
+\n    { lineno ++;}
 
 {W}+    { /* return nothing */ }
 
@@ -78,12 +77,20 @@ W [ \t\n\r]
 
 %%
 
-  void yyerror(const char *msg) {
-  fprintf(stderr, "%s\n", msg);
-  exit(1);
+void yyerror(const char *msg) {
+    std::cout << msg;
+    exit(1);;
+  }
+  void yyerror(const char *msg, int line) {
+    std::cout << msg << " at line: "<<line;
+    exit(1);;
   }
   void yyerror(const char *msg, const std::string& name){
-    std::cout << msg << " " << name;
+    std::cout << msg << " " << name ;
+    exit(1);
+  }
+  void yyerror(const char *msg, const std::string& name, int line){
+    std::cout << msg << " " << name << " at line: "<<line;
     exit(1);
   }
 /*

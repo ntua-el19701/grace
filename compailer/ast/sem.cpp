@@ -11,7 +11,7 @@ bool constFlag = 0;
 int arrayFlag = 0; //used to see if a parameter is an array in L value
 std::vector<ParameterEntry> vec;
 std::vector<ParameterEntry> fcallparams; // used for func_Call
-
+extern int lineno;
 /*
     COMPARE
 */
@@ -218,7 +218,8 @@ void L_value::sem(){
         type = e->type;
     }
     else if(flag == 2){
-        type = TYPE_const_string;
+        //type = TYPE_const_string;
+        type = TYPE_const_char;
     }
     else if(flag == 3) {//array
         arrayFlag ++;
@@ -412,7 +413,7 @@ void Func_call_expr::sem(){   //DO I HAVE TO FETCH FUNC SCOPE?? what happens in 
         } 
         else{
             for (int i = 0; i < static_cast<int>(correctParams.size()); i++){
-            //  std::cout<< "param arr size: " << correctParams.at(i).arraySize << " sent size: " << fcallparams.at(i).name<<fcallparams.at(i).arraySize;
+              //std::cout<< "param arr size: " << correctParams.at(i).arraySize << " sent size: " << fcallparams.at(i).name<<fcallparams.at(i).arraySize;
                 if(correctParams.at(i).type != fcallparams.at(i).type)
                     yyerror("Function called with wrong parameters: ", id.getName());
                 else if(correctParams.at(i).arraySize != 0 && fcallparams.at(i).arraySize == 0)
@@ -491,7 +492,7 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
     expr->findType();
    
     if(idflag == 1 && constFlag == 0){ //if the expression is an id
-     
+        
         SymbolEntry *e = st.lookup(expr->getName()); //find if it exists
       
         if(idAfterArr == 3) { //this means that we have x[i] so this is not an array but an int or a char
@@ -621,7 +622,8 @@ void Const_char::arrayCheck(){
     STRING CONST
 */
 void StringConst::sem() {
-    type = TYPE_const_string;
+    //type = TYPE_const_string;
+    type = TYPE_char;
     idflag = 0;
 }
 void StringConst::arrayCheck(){

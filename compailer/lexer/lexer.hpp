@@ -3,5 +3,5 @@
 
 int yylex();
 void yyerror(const char *msg);
-
+void yyerror(const char *msg, int line);
 #endif

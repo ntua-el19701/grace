@@ -1,12 +1,12 @@
 fun main() :nothing
-    var y : int[3];
+    
     var i : int;
     fun peos(x : int) : int 
     {
         
         
         
-           peos(i + i);
+       if peos(i) > 2 then return 1;
         
         
         return 0;
