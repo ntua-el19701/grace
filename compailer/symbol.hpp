@@ -8,7 +8,7 @@
 void yyerror(const char *msg);
 void yyerror(const char *msg, const std::string& name);
 
-enum Typos { TYPE_int, TYPE_char, TYPE_nothing,  TYPE_bool, TYPE_const_char, TYPE_const_string, TYPE_id};
+enum Typos { TYPE_int, TYPE_char, TYPE_nothing,  TYPE_bool, TYPE_const_char, TYPE_const_string};
 enum EntryType { ENTRY_CONSTANT, ENTRY_PARAMETER, ENTRY_VARIABLE };
 
 

@@ -22,9 +22,9 @@ fun solve (): nothing
 { 
   
    writeString("Please, give the number of rings: ");
-   NumberOfRings <- readInteger();
+   NumberOfRings <-3; $ readInteger();
    writeString("\nHere is the solution:\n\n");
-   hanoi(NumberOfRings, "left", "right", "middle"); 
+  $ hanoi(NumberOfRings, "left", "right", "middle"); 
    
  
 

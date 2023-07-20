@@ -5,9 +5,9 @@ vector<int> functions; //vector that contains each return value of every functio
 bool returned = false; //flag to check if function returns correctly
 bool idGenFlag = false; // if this is false then comma id gen inserts variable. else it inserts parameter
 int arraySize = 0;
-bool idflag = 0; 
+bool idflag = 0; //used to check if we have an id
 int idAfterArr = 0; //this is to find if we have x[i] (id after array)
-
+bool constFlag = 0;
 int arrayFlag = 0; //used to see if a parameter is an array in L value
 std::vector<ParameterEntry> vec;
 std::vector<ParameterEntry> fcallparams; // used for func_Call
@@ -270,6 +270,7 @@ void BinOp::sem(){
     expr1->check_type(TYPE_int);  // only integers
     expr2->check_type(TYPE_int);
     type = TYPE_int;
+    constFlag = 1;
 }
 
 /*
@@ -278,6 +279,7 @@ void BinOp::sem(){
 void UnOp::sem(){
     expr->check_type(TYPE_int);  // only integers
     type = TYPE_int;
+    constFlag = 1;
 }
 
 /*
@@ -368,7 +370,7 @@ void Fpar_type::sem(){
     FUNC CALL EXPR
 */
 void Func_call_expr::sem(){   //DO I HAVE TO FETCH FUNC SCOPE?? what happens in the symbol table? create new scope for the variables of the function only
-   
+    
     while (!fcallparams.empty()) // empty the vector that will contain the parameters fot a fun call
     {
         fcallparams.pop_back();
@@ -387,7 +389,7 @@ void Func_call_expr::sem(){   //DO I HAVE TO FETCH FUNC SCOPE?? what happens in 
         idAfterArr = 0; // set this to 0
         expr->findType();
 
-    if(idflag == 1){ //if the expression is an id
+    if(idflag == 1 && constFlag == 0){ //if the expression is an id
         
         SymbolEntry *e = st.lookup(expr->getName()); //find if it exists
         if(idAfterArr == 3) { //this means that we have x[i] so this is not an array but an int or a char
@@ -440,9 +442,10 @@ void Func_call_expr::arrayCheck(){
 */
 void Comma_expr_gen::sem(){
     if(expr != nullptr){
+        constFlag = 0;
         idAfterArr = 0;
         expr->findType (); 
-    if(idflag == 1){ //if the expression is an id
+    if(idflag == 1 && constFlag == 0){ //if the expression is an id
         
         SymbolEntry *e = st.lookup(expr->getName()); //find if it exists
         if(idAfterArr == 3) { //this means that we have x[i] so this is not an array but an int or a char
@@ -467,7 +470,7 @@ void Comma_expr_gen::sem(){
     FUNC CALL STMT //SAME AS FUNC CALL EXPR 
 */ 
 void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat happens in the symbol table? create new scope for the variables of the function only
-  
+    
     while (!fcallparams.empty()) // empty the vector that will contain the parameters fot a fun call
     {
         fcallparams.pop_back();
@@ -487,24 +490,28 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
     idAfterArr = 0;
     expr->findType();
    
-    if(idflag == 1){ //if the expression is an id
-        
+    if(idflag == 1 && constFlag == 0){ //if the expression is an id
+     
         SymbolEntry *e = st.lookup(expr->getName()); //find if it exists
+      
         if(idAfterArr == 3) { //this means that we have x[i] so this is not an array but an int or a char
              
-        fcallparams.push_back(ParameterEntry(e->type, expr->getName(), 0 )); // find the id name type and arraysize. 
+            fcallparams.push_back(ParameterEntry(e->type, expr->getName(), 0 )); // find the id name type and arraysize. 
         }
         else{
-              fcallparams.push_back(ParameterEntry(e->type, expr->getName(), e->arraySize ));
+            fcallparams.push_back(ParameterEntry(e->type, expr->getName(), e->arraySize ));
         }
     }
     
     else{
-        fcallparams.push_back(ParameterEntry(expr->type, "const", 0));
-        }        //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
+         
+        fcallparams.push_back(ParameterEntry(expr->type, "const", 0));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
+        
+        }       
     if(comma_expr_gen != nullptr){
        comma_expr_gen->sem();
     }
+    
     if(correctParams.size() != fcallparams.size()){
        yyerror("Function called with wrong amount of parameters: ", id.getName());
     } 
@@ -566,7 +573,7 @@ void Write_Char::sem(){
 void Id::sem(){
     
     idflag = 1;
-    type = TYPE_id;
+   // type = TYPE_id;
    
 }
 
