@@ -10,7 +10,7 @@ void yyerror(const char *msg);
 void yyerror(const char *msg, const std::string& name);
 
 enum Typos { TYPE_int, TYPE_char, TYPE_nothing,  TYPE_bool, TYPE_const_char, TYPE_const_string};
-enum EntryType { ENTRY_CONSTANT, ENTRY_PARAMETER, ENTRY_VARIABLE };
+enum EntryType { ENTRY_CONSTANT, ENTRY_PARAMETER, ENTRY_VARIABLE, ENTRY_FUNCTION};
 extern int lineno;
 
 struct SymbolEntry {

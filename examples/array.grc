@@ -1,17 +1,4 @@
-fun main() :nothing
+fun main() : nothing
+    fun swap() : nothing
+
     
-    var i : int;
-    fun peos(x : int) : int 
-    {
-        
-        
-        
-       if peos(i) > 2 then return 1;
-        
-        
-        return 0;
-    }
- 
-    {
-         
-    }  

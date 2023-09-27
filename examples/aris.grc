@@ -1,0 +1,18 @@
+fun main() : nothing
+
+fun help(n,m : int) : int
+
+{
+    return n+m;
+}
+    var x : int;
+fun help2() : nothing 
+    var q;
+{
+    q <- help(1,2);
+}
+{
+ x <- help(1,2); 
+
+}
+

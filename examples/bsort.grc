@@ -36,6 +36,7 @@ fun main () : nothing
          if i > 0 then writeString(", ");
          writeInteger(x);
          i <- i+1;
+         
       }
       writeString("\n");
    }

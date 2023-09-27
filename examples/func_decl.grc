@@ -1,0 +1,22 @@
+fun main () : nothing
+
+fun help (n : int) : int;
+
+
+fun hello () :nothing
+    var x : int;
+{
+    x <- help(0);
+
+}
+
+fun help(n : int) : int{
+    return 1;
+}
+
+{
+
+}
+
+
+

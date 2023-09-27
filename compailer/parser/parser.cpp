@@ -2121,7 +2121,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (YY_("syntax error"),lineno);
+      yyerror (YY_("syntax error"));
 #else
       {
 	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);

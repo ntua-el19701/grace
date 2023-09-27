@@ -9,6 +9,7 @@ bool idflag = 0; //used to check if we have an id
 int idAfterArr = 0; //this is to find if we have x[i] (id after array)
 bool constFlag = 0;
 int arrayFlag = 0; //used to see if a parameter is an array in L value
+int start=0;
 std::vector<ParameterEntry> vec;
 std::vector<ParameterEntry> fcallparams; // used for func_Call
 extern int lineno;
@@ -43,7 +44,7 @@ void Header::sem(){
         vec.pop_back();
     }
     
-   // st.insert(nam.getName(),ret_type->getTypos(),ENTRY_FUNCTION, 0);
+    st.insert(nam.getName(),ret_type->getTypos(),ENTRY_FUNCTION, 0);
     
     functions.push_back(ret_type->getTypos());
     if(fpar_def != nullptr)
@@ -51,17 +52,27 @@ void Header::sem(){
     if(fpar_def_gen!= nullptr)
         fpar_def_gen->sem();
     ft.insert(nam.getName(), vec,ret_type->getTypos());
-  //  ft.printST();
-    //st.printST();
+    ft.printST();
+    st.printST();
 }
 
 /*
     FUNC DEF
 */
 void Func_def::sem(){
+
+    if(start==0){
     st.openScope();
     
     header->sem();
+    start=1;
+    }
+    else{
+
+    header->sem();
+    st.openScope();
+
+    }
     if(local_def_gen != nullptr){
         local_def_gen->sem();
     }
@@ -137,7 +148,8 @@ void Local_def_gen::sem(){
 /*
     FUNC DECL
 */
-void Func_decl::sem() {
+void Func_decl::sem() { //to do???
+
     header->sem();
 }
 
@@ -376,12 +388,14 @@ void Func_call_expr::sem(){   //DO I HAVE TO FETCH FUNC SCOPE?? what happens in 
     {
         fcallparams.pop_back();
     }
+   SymbolEntry *s = st.lookup(id.getName());
+   if (s != nullptr){ 
+    FunctionEntry *f = ft.lookup(id.getName());   // find if there is a function with this name
+    if (f != nullptr){ 
+        type = f->return_type; // set the type as the return type of the function
+        
+    }
    
-   FunctionEntry *f = ft.lookup(id.getName());   // find if there is a function with this name
-   if (f != nullptr){ 
-    type = f->return_type; // set the type as the return type of the function
-    
-   }
    std::vector<ParameterEntry> correctParams = f->getParams();
     if(expr == nullptr && correctParams.size() != 0){
     yyerror("Function called without parameters! ", id.getName());
@@ -426,7 +440,7 @@ void Func_call_expr::sem(){   //DO I HAVE TO FETCH FUNC SCOPE?? what happens in 
     }
    }
 
-
+   }
    
 }
 
@@ -476,7 +490,8 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
     {
         fcallparams.pop_back();
     }
-   
+   SymbolEntry *s = st.lookup(id.getName());
+   if (s != nullptr){ 
    FunctionEntry *f = ft.lookup(id.getName());   // find if there is a function with this name
    if (f != nullptr){ 
     type = f->return_type; // set the type as the return type of the function
@@ -529,7 +544,7 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
         }   
     } 
    }
-  
+   }
    
     
    

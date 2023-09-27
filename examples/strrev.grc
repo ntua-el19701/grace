@@ -2,7 +2,7 @@ fun main () : nothing
 
    var r : char[20];
 
-   
+ 
    fun reverse (ref s : char[]) : nothing
       var i, l : int; 
    {
