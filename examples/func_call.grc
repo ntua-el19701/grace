@@ -1,7 +1,7 @@
 fun main() : nothing
     var xaa : int;
     var x : int[10];
-    fun peos(y, x : int; c : int) : int
+    fun pi(y, x : int; c : int) : int
 
     var h : int;
     fun hi (v : int) :nothing
@@ -9,7 +9,7 @@ fun main() : nothing
         
         {   
         
-         hi(x[p]);  
+         hi(x[12]);  
         
         }
     {

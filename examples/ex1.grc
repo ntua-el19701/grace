@@ -2,6 +2,6 @@ fun main (x  : int; peos : char; peomouris : char[12]) : nothing
     var a : char;
     fun p () : nothing
     {
-        a <-'qa;
+        a <-'a';
     }
 {}

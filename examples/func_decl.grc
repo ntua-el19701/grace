@@ -15,7 +15,8 @@ fun help(n : int) : int{
 }
 
 {
-
+    help(1);
+    hello();
 }
 
 

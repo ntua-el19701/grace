@@ -9,8 +9,9 @@ bool idflag = 0; //used to check if we have an id
 int idAfterArr = 0; //this is to find if we have x[i] (id after array)
 bool constFlag = 0;
 int arrayFlag = 0; //used to see if a parameter is an array in L value
-int start=0;
+int start = 0; //
 int decl = 0;
+int arrayIndex = -1;
 std::vector<ParameterEntry> vec;
 std::vector<ParameterEntry> fcallparams; // used for func_Call
 extern int lineno;
@@ -224,19 +225,20 @@ void L_value::sem(){
     if(flag == 1){
         idflag = 1;
         SymbolEntry *e = st.lookup(id.getName());
-        
-
-        
+ 
         if(arrayFlag == 1) { // this means that this id must be an integer
             arrayFlag ++;
-            if(e->arraySize == 0){
+            if(e->arraySize == 0){  // checks if the id is an array
                  yyerror("This is not an array ", id.getName());
             }
         }
-            
+        else{
+            if(e->arraySize >0){ // checks if the id is an array
+                yyerror("This is an array: ", id.getName());
+            }
+        }
         idAfterArr ++;     //if this goes to 3 then it means we have x[i]
-        
-       
+
       //  std::cout<<id.getName()<< " "<<type<<" ";
         
         type = e->type;
@@ -249,10 +251,14 @@ void L_value::sem(){
         arrayFlag ++;
         idAfterArr ++;
         l_value->sem();
+
         expr->sem();
         
         expr->arrayCheck(); // checks the type index of the array
-        
+        if(arrayIndex >= st.lookup(l_value->getName())->arraySize || arrayIndex < 0){
+            yyerror("Wrong Array Index! ", l_value->getName());
+        }
+        arrayIndex = -1;
         type = l_value->type;
         
         
@@ -630,8 +636,11 @@ void Ret_type::sem(){
 void IntConst::sem() {
     type = TYPE_int;
     idflag = 0;
+    
+
 }
 void IntConst::arrayCheck(){
+   arrayIndex = num;
    
 }
 
