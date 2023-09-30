@@ -11,7 +11,7 @@ bool constFlag = 0;
 int arrayFlag = 0; //used to see if a parameter is an array in L value
 int start = 0; //
 int decl = 0;
-int arrayIndex = -1;
+int arrayIndex = -1; //used to check arrayIndex
 std::vector<ParameterEntry> vec;
 std::vector<ParameterEntry> fcallparams; // used for func_Call
 extern int lineno;

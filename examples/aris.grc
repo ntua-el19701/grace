@@ -1,11 +1,11 @@
 fun main() : nothing
 
-var x : int[10];
+var x : int[10][10];
 var y: int[23];
 var vasos : int;
     fun test(t : int):int{
-       vasos <- x[2];
-       x[3] <-3;
+      
+      
        y[2] <- 3;
        return 3;
     }
