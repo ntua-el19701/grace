@@ -10,6 +10,7 @@ int idAfterArr = 0; //this is to find if we have x[i] (id after array)
 bool constFlag = 0;
 int arrayFlag = 0; //used to see if a parameter is an array in L value
 int start=0;
+int decl = 0;
 std::vector<ParameterEntry> vec;
 std::vector<ParameterEntry> fcallparams; // used for func_Call
 extern int lineno;
@@ -43,15 +44,25 @@ void Header::sem(){
     {
         vec.pop_back();
     }
+    if(decl==1){
+     st.insert(nam.getName(),ret_type->getTypos(),ENTRY_FUNCTION, -100);
     
+    }
+    
+    else
     st.insert(nam.getName(),ret_type->getTypos(),ENTRY_FUNCTION, 0);
     
+    if(decl==0){
     functions.push_back(ret_type->getTypos());
+    
+    }
     if(fpar_def != nullptr)
         fpar_def->sem();
     if(fpar_def_gen!= nullptr)
         fpar_def_gen->sem();
-    ft.insert(nam.getName(), vec,ret_type->getTypos());
+    
+    ft.insert(nam.getName(), vec,ret_type->getTypos(),1-decl);
+    decl=0;
     ft.printST();
     st.printST();
 }
@@ -149,8 +160,9 @@ void Local_def_gen::sem(){
     FUNC DECL
 */
 void Func_decl::sem() { //to do???
-
+    decl = 1;
     header->sem();
+   
 }
 
 /*
@@ -240,6 +252,7 @@ void L_value::sem(){
         expr->sem();
         
         expr->arrayCheck(); // checks the type index of the array
+        
         type = l_value->type;
         
         
@@ -619,7 +632,7 @@ void IntConst::sem() {
     idflag = 0;
 }
 void IntConst::arrayCheck(){
-    
+   
 }
 
 /*

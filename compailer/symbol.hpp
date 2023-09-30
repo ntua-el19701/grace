@@ -33,30 +33,44 @@ ParameterEntry(Typos t, std::string n, int arr) : type(t), name(n), arraySize(ar
 struct FunctionEntry {  //struct that has the fields of a function : return type and a vector that contains its parameters
 Typos return_type;
 std::vector<ParameterEntry> parameters; // vector for parameters (EntryType will always be ENTRY_Parameter)
-
+int body;
 std::vector<ParameterEntry> getParams(){
     return parameters;
 }
 FunctionEntry() {}
-FunctionEntry(Typos t, std::vector<ParameterEntry> st)  {
+FunctionEntry(Typos t, std::vector<ParameterEntry> st, int b)  {
     return_type = t;
-  
+    body = b;
+    
     if(!st.empty()){
         parameters = st;
     }
 }
+
 };
 
 class Func_scope{  //has a map with the function name and a function Entry field. Here we insert a new funtion 
 public:
     Func_scope(){}
-    void insert(std::string s, std::vector<ParameterEntry> st, Typos t){
+    void insert(std::string s, std::vector<ParameterEntry> st, Typos t, int b){
         //to do look if there is a function with the same name
-        if (funcs.find(s) != funcs.end()){ yyerror("Duplicate Function Name : ", s); }
 
         
-        funcs[s] = FunctionEntry(t, st);
+        if (funcs.find(s) != funcs.end()){
+            FunctionEntry *f = &funcs[s];
+            if(f->body == 1)
+             yyerror("Duplicate Function Name : ", s);
+             else{
+                f->body = b; 
+             }
+        }
         
+      /* if (funcs.find(s) != funcs.end()){
+             yyerror("Duplicate Function Name : ", s);
+        }*/
+        else{
+            funcs[s] = FunctionEntry(t, st,b);
+        }
     }
     void printScope(){
        for(const auto &elem : funcs){
@@ -80,9 +94,9 @@ private:
 
 class FunctionTable{  // contains all the functions of the program
 public:
-   void insert(std::string s, std::vector<ParameterEntry> st, Typos t){
+   void insert(std::string s, std::vector<ParameterEntry> st, Typos t, int b){
          // each scope is one function
-        Func_scopes.insert(s ,st, t);
+        Func_scopes.insert(s ,st, t, b);
     }
    void printST (){
      std::cout<<"Printing FT: " << std::endl;
@@ -104,9 +118,22 @@ class Scope {
 public:
     Scope() {}
     void insert(std::string s, Typos t, EntryType et, int isArr){
-        if (locals.find(s) != locals.end()){ yyerror("Duplicate variable: ", s); } 
+        if (locals.find(s) != locals.end()){ 
+            
+           
+            SymbolEntry *f = &locals[s];
+            if((f->entryType!=ENTRY_FUNCTION ) || (f->arraySize != -100))
+            yyerror("Duplicate variable: ", s);
+             else{
+                f->arraySize = 0; 
+             }
+        }
+            
+             
         //std::cout<<"insert in scope "<<std::endl;
+        else{
         locals[s] = SymbolEntry(t, et, isArr);
+        }
     }
     SymbolEntry *lookup(std::string s){
         if (locals.find(s) == locals.end()) return nullptr;
@@ -147,6 +174,7 @@ public:
     }
 
     void insert(std::string s, Typos t, EntryType et, int arr) {
+        
         scopes.back().insert(s , t, et, arr);
         //std::cout<<s<<" insert"<<std::endl;
     }

@@ -1,16 +1,8 @@
-$$
-  This grace program checks whether the evaluation of the result of the
-  logical operators "and" and "or" uses short-circuiting.
 
-  The program below has 3 functions that return 1 for true and 0 for false.
-  In the main function there are some if-then-else and while-do statements
-  the conditions of which use the said logical operators with two function
-  calls as arguments and that can be short-circuited.
-$$
 
 fun main () : nothing
 
-  var x, y : int;
+  var x, y,i : int;
   var k, l : char;
 
   fun isOne (a : int) : int
@@ -34,9 +26,9 @@ fun main () : nothing
   { $ isUpperCase
 
     writeString("Checking if ");
-    writeCharacter(c);
-    writeCharacter(" is a capital letter.\n");
-    asciiNum <- ascii(c);
+    
+    asciiNum <- 3;
+    $ ascii(c);
     if asciiNum >= 65 and asciiNum <= 91 then
       return 1;
     else
@@ -71,7 +63,7 @@ fun main () : nothing
   else
     writeString("This message will never be printed.\n");
 
-  writeChar('\n');
+ $ writeChar('\n');
 
   k <- 'n';
   l <- 'S';
@@ -80,7 +72,7 @@ fun main () : nothing
   else
     writeString("'isUpperCase' function call should only happen for variable 'k'.\n");
 
-  writeChar('\n');
+  $writeChar('\n');
 
   $ The 2nd repetition of this while loop is the only occasion in this program where there can't be short-circuiting.
   i <- 41;
@@ -90,7 +82,7 @@ fun main () : nothing
   }
   writeString("'isOne' function call should only happen once here.\n");
 
-  writeChar('\n');
+ $ writeChar('\n');
 
   i <- 0;
   while isOne(i) = 1 and isWithinLimit(i, -1, 1) = 1 do {

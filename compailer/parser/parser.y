@@ -168,7 +168,7 @@ type:
 
 type_gen:
         /*nothing*/                                                 { $$ = nullptr; }
-        | '[' T_const_int ']' type_gen                              { $$ = new Type_gen($2, $4); } //array?
+        | '[' T_const_int ']' type_gen                              { $$ = new Type_gen($2, $4); } //array
         ;
 
 ret_type:                                                          
