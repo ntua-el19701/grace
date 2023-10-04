@@ -1,7 +1,8 @@
-fun main (x  : int; peos : char; peomouris : char[12]) : nothing
-    var a : char;
-    fun p () : nothing
-    {
-        a <-'a';
-    }
+fun main() : nothing
+
+fun a () : nothing
+var x : int[2];
+{
+    x[3] <-3;
+}
 {}
