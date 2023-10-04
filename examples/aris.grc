@@ -1,17 +1,17 @@
 fun main() : nothing
 
-var x : int[10][10];
+var x : int[10];
 var y: int[23];
 var vasos : int;
     fun test(t : int):int{
       
-      
+       t <- 4;      
        y[2] <- 3;
        return 3;
     }
 
 {
-  x[2] <- 3;
+  x[34] <- 3;
 
 }
 

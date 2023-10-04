@@ -1,5 +1,3 @@
-//sem.cpp
-
 #include "ast.hpp"
 #include <vector>
 Typos prevType; // used for comma id gen
@@ -11,19 +9,15 @@ bool idflag = 0; //used to check if we have an id
 int idAfterArr = 0; //this is to find if we have x[i] (id after array)
 bool constFlag = 0;
 int arrayFlag = 0; //used to see if a parameter is an array in L value
+int start = 0; //
+int decl = 0;
 int arrayIndex = -1; //used to check arrayIndex
-bool main_found = false;
-bool func_has_body = false;
-bool check_if_array=true;
-
-std::vector<ParameterEntry> vec;    /// used in HEADER, Fpar_def , Fpar_def_gen
+std::vector<ParameterEntry> vec;
 std::vector<ParameterEntry> fcallparams; // used for func_Call
 extern int lineno;
 /*
     COMPARE
 */
-
-// Compare 2 Expressions , Return Type = Bool if correct
 void Compare::sem() {
     expr1->findType();
     expr2->findType();
@@ -35,8 +29,6 @@ void Compare::sem() {
 /*
     COND
 */
-
-// Check if Type cond1 = Bool & Type cond2 = Bool , Return Type = Bool if Correct
 void Cond::sem() {
     cond1->check_type(TYPE_bool);
     if(cond2 != nullptr){
@@ -48,47 +40,30 @@ void Cond::sem() {
 /*
     HEADER
 */
-
-// fun ID (Fpar_def ; Fpar_def_gen) : Ret_type ;
-// ID : nam , Fpar_def = fp , Fpar_def_gen = fpg , Ret_type = r
 void Header::sem(){
-    
-    // vec contains PARAMETERS ( Type , name , arraysize)
-    // Clear this Header parameters to add them again later
     while (!vec.empty()) // empty the vector that will contain possible parameters of the funtion
     {
         vec.pop_back();
     }
-
-    // Function declaration without or with body , -100 = No body , 0 = Has Body
-    if(func_has_body==false){
+    if(decl==1){
      st.insert(nam.getName(),ret_type->getTypos(),ENTRY_FUNCTION, -100);
     
     }
+    
     else
     st.insert(nam.getName(),ret_type->getTypos(),ENTRY_FUNCTION, 0);
     
-    //if Header has body , get the Expected Return Type
-    //functions = Vector with expected return Types
-    if(func_has_body==true){
+    if(decl==0){
     functions.push_back(ret_type->getTypos());
+    
     }
-
-    //call frpar_def , fpardef_gen in order to create vector vec
     if(fpar_def != nullptr)
         fpar_def->sem();
     if(fpar_def_gen!= nullptr)
         fpar_def_gen->sem();
     
-    // Function declaration with parameters at vec without or with body , 0 = No body , 1 = Has Body
-    if(func_has_body==true){
-        ft.insert(nam.getName(), vec,ret_type->getTypos(),1);
-    }
-    else
-        ft.insert(nam.getName(), vec,ret_type->getTypos(),0);
-
-    func_has_body = true;
-
+    ft.insert(nam.getName(), vec,ret_type->getTypos(),1-decl);
+    decl=0;
     ft.printST();
     st.printST();
 }
@@ -96,33 +71,24 @@ void Header::sem(){
 /*
     FUNC DEF
 */
-
-// New Function with body
-// Func_def = header + local_def_gen + block
 void Func_def::sem(){
 
-    // --------header-------
-    func_has_body = true;
-
-    //Open new Symbol Table Scope
-    if(main_found==false){
+    if(start==0){
     st.openScope();
+    
     header->sem();
-    main_found=true;
+    start=1;
     }
     else{
+
     header->sem();
     st.openScope();
-    }
 
-    // --------local_def_gen---------
+    }
     if(local_def_gen != nullptr){
         local_def_gen->sem();
     }
-
-    // ---------block--------
-
-    block -> fetch_func(header->getName());  // insert parameters in Symbol Table
+    block -> fetch_func(header->getName());  
  
     block->sem();
     block->checkReturn();
@@ -143,6 +109,8 @@ void Block::checkReturn(){  //checks if funtion returned correctly
     //std::cout<<returned; 
     if(functions.back() == 2 && returned == false){
         returned = true;
+        
+        
     }
     else if(returned==false && functions.back() != 2){
         yyerror("Function doesn't return anything!" );
@@ -150,7 +118,6 @@ void Block::checkReturn(){  //checks if funtion returned correctly
 
 }
 
-//insert fpar_def parameters in Symbol Table 
 void Block::fetch_func(std::string name){
     FunctionEntry *f = ft.lookup(name);
     std::vector<ParameterEntry> params = f->parameters;
@@ -167,9 +134,7 @@ void Block::fetch_func(std::string name){
     LOCAL DEF
 */
 void Local_def::sem(){
-
-    //3 Cases: Local def is func_def OR func_decl OR var_def
-
+    
     if (func_def != nullptr)
         func_def->sem();
     else if(func_decl != nullptr)
@@ -184,7 +149,6 @@ void Local_def::sem(){
 /*
     LOCAL DEF GEN    
 */
-// Calls local_def->sem()
 void Local_def_gen::sem(){
     
     local_def->sem();
@@ -196,9 +160,8 @@ void Local_def_gen::sem(){
 /*
     FUNC DECL
 */
-void Func_decl::sem() { 
-   
-    func_has_body = false;
+void Func_decl::sem() { //to do???
+    decl = 1;
     header->sem();
    
 }
@@ -206,19 +169,16 @@ void Func_decl::sem() {
 /*
     VAR DEF
 */
-// Var_def has id , comma_id_gen->sem() , type
-
 void Var_def::sem() {
-    
-    //get arraysize in Var_def declaration , add to the scope
     arraySize = 0;
     if(type->getTypeGen() != nullptr){
         arraySize = type->getTypeGen()->getSize();
          //add in symbol table with arr
     }
-    
     st.insert(id.getName(), type->getTypos(), ENTRY_VARIABLE, arraySize);
-     
+    //else{
+      //  st.insert(id.getName(), type->getTypos(), ENTRY_VARIABLE, 0); //add in symbol table
+    //}   
     prevType = type->getTypos(); // for comma id gen
     if(comma_id_gen!=nullptr){
         idGenFlag = false;
@@ -230,7 +190,6 @@ void Var_def::sem() {
 /*
     COMMA ID GEN
 */
-// Comes from Fpar_def , does the same work for each (,)
 void Comma_id_gen::sem() {
     if(idGenFlag == 0) {
         st.insert(name.getName(),prevType ,ENTRY_VARIABLE, arraySize); 
@@ -255,35 +214,31 @@ void Assign::sem() {
     //expr->sem();
   
     expr->check_type(type); // check that the assigned type is the same as the type of the id
-
+    
 }
 
 /*
     L_VALUE
 */
-int arr_size;
 void L_value::sem(){
     
     if(flag == 1){
         idflag = 1;
-        SymbolEntry *e = st.lookup(id.getName()); /// find Symbol
-
-        arr_size = e->arraySize;
-
+        SymbolEntry *e = st.lookup(id.getName());
+ 
         if(arrayFlag == 1) { // this means that this id must be an integer
             arrayFlag ++;
-            if(e->arraySize == 0){
+            if(e->arraySize == 0){  // checks if the id is an array
                  yyerror("This is not an array ", id.getName());
             }
         }
-        else
-        if((e->arraySize >0)&&(check_if_array==true)){
-             yyerror("This must be array ", id.getName());
+        else{
+            if(e->arraySize >0){ // checks if the id is an array
+                yyerror("This is an array: ", id.getName());
+            }
         }
-        check_if_array = true;
         idAfterArr ++;     //if this goes to 3 then it means we have x[i]
-        
-       
+
       //  std::cout<<id.getName()<< " "<<type<<" ";
         
         type = e->type;
@@ -296,9 +251,9 @@ void L_value::sem(){
         arrayFlag ++;
         idAfterArr ++;
         l_value->sem();
+
         expr->sem();
         
-    
         expr->arrayCheck(); // checks the type index of the array
         if(arrayIndex >= st.lookup(l_value->getName())->arraySize || arrayIndex < 0){
             yyerror("Wrong Array Index! ", l_value->getName());
@@ -347,7 +302,6 @@ void BinOp::sem(){
     expr1->check_type(TYPE_int);  // only integers
     expr2->check_type(TYPE_int);
     type = TYPE_int;
-   
     constFlag = 1;
 }
 
@@ -405,13 +359,8 @@ void Return::sem(){
 /*
     FPAR DEF
 */
-// This is called from header->sem(), Creates vector vec with all the function parameters
-
 void Fpar_def::sem(){
-
-    //Find arraySize
     arraySize = 0;
-    // if the parameter is Array[] => arraySize = -1 
     if(fpar_type->getArray() == 1){
       arraySize = -1; // char[] or int[] => arraySize = -1;
     }
@@ -424,7 +373,6 @@ void Fpar_def::sem(){
     vec.push_back(ParameterEntry(fpar_type->getType(),name.getName(), arraySize));
  //   st.insert(name.getName(),fpar_type->getType(), ENTRY_PARAMETER, arraySize);
     
- // keep the type in order to insert the new parameter for each ,   
     prevType = fpar_type->getType();
     if(comma_id_gen!=nullptr){
        idGenFlag = true;
@@ -436,7 +384,6 @@ void Fpar_def::sem(){
 /*
     FPAR DEF GEN
 */
-// Calls Fpar_def 
 void Fpar_def_gen::sem(){
     
     fpar_def->sem();
@@ -573,8 +520,6 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
    if(expr == nullptr && correctParams.size() != 0){
     yyerror("Function called without parameters! ", id.getName());
    }
-
-   check_if_array = false;
   
    if(expr != nullptr){
     idAfterArr = 0;
@@ -691,10 +636,12 @@ void Ret_type::sem(){
 void IntConst::sem() {
     type = TYPE_int;
     idflag = 0;
-   
+    
+
 }
 void IntConst::arrayCheck(){
    arrayIndex = num;
+   
 }
 
 /*

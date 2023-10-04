@@ -14,11 +14,11 @@ enum EntryType { ENTRY_CONSTANT, ENTRY_PARAMETER, ENTRY_VARIABLE, ENTRY_FUNCTION
 extern int lineno;
 
 struct SymbolEntry {
-Typos type;
-EntryType entryType;
-int arraySize = 0;
-SymbolEntry() {}
-SymbolEntry(Typos t, EntryType et, int arr) : type(t), entryType(et), arraySize(arr) {}
+    Typos type;
+    EntryType entryType;
+    int arraySize = 0;
+    SymbolEntry() {}
+    SymbolEntry(Typos t, EntryType et, int arr) : type(t), entryType(et), arraySize(arr) {}
 };
 
 struct ParameterEntry { //struct that has the fields of a parameter : type, name and arraySize
@@ -31,21 +31,21 @@ ParameterEntry(Typos t, std::string n, int arr) : type(t), name(n), arraySize(ar
 
 
 struct FunctionEntry {  //struct that has the fields of a function : return type and a vector that contains its parameters
-Typos return_type;
-std::vector<ParameterEntry> parameters; // vector for parameters (EntryType will always be ENTRY_Parameter)
-int body;
-std::vector<ParameterEntry> getParams(){
-    return parameters;
-}
-FunctionEntry() {}
-FunctionEntry(Typos t, std::vector<ParameterEntry> st, int b)  {
-    return_type = t;
-    body = b;
-    
-    if(!st.empty()){
-        parameters = st;
+    Typos return_type;
+    std::vector<ParameterEntry> parameters; // vector for parameters (EntryType will always be ENTRY_Parameter)
+    int body;
+    std::vector<ParameterEntry> getParams(){
+        return parameters;
     }
-}
+    FunctionEntry() {}
+    FunctionEntry(Typos t, std::vector<ParameterEntry> st, int b)  {
+        return_type = t;
+        body = b;
+        
+        if(!st.empty()){
+            parameters = st;
+        }
+    }
 
 };
 
