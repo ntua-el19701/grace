@@ -1,17 +1,26 @@
-fun main() : nothing
+fun main(ref x , z: char ; y : char ; abc:int ) : nothing
+    var abd : int;
+    fun aris(x,y : int; q : char): int
+      fun abc():int{
 
-var x : int[10];
-var y: int[23];
-var vasos : int;
-    fun test(t : int):int{
+        return 115;
+      }
+    {
       
-       t <- 4;      
-       y[2] <- 3;
-       return 3;
+
+      if 8 < 1 then {x<-7;}  else x<-10;
+      
+      return x;
+    }
+     fun test(x,y : int; q : char): nothing
+    {
+      
+
+      if 8 < 1 then x<-7 ; else x<-10;
+      
+     
     }
 
 {
-  x[34] <- 3;
-
+  abd<-3;
 }
-

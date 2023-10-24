@@ -44,9 +44,9 @@ fun main() : nothing
 
 { $ main
   n <- 54;
-  writeInteger(n);
-  writeString(" is ");
-  if divisibleBy3(n) # 1 then
-    writeString("not ");
-  writeString("divided by 3.\n");
+  $writeInteger(n);
+  $writeString(" is ");
+  if divisibleBy3(n) # 1 then ;
+   $ writeString("not ");
+ $ writeString("divided by 3.\n");
 } $ main
