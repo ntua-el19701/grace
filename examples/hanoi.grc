@@ -2,11 +2,11 @@ fun solve () : nothing
    fun hanoi (rings : int; ref source, target, auxiliary : char[]) : nothing
    fun move (ref source, target : char[]) : nothing
    {
-   writeString(”Move from ”);
+   writeString("Move from ");
    writeString(source);
-   writeString(” to ”);
+   writeString(" to ");
    writeString(target);
-   writeString(”.\n”);
+   writeString(".\n");
    }
    { $ hanoi
    if rings >= 1 then {
@@ -17,8 +17,8 @@ fun solve () : nothing
    } $ hanoi
    var NumberOfRings : int;
    { $ solve
-   writeString(”Please, give the number of rings: ”);
+   writeString("Please, give the number of rings: ");
    NumberOfRings <­ readInteger();
-   writeString(”\nHere is the solution:\n\n”);
+   writeString("\nHere is the solution:\n\n");
    hanoi(NumberOfRings, ”left”, ”right”, ”middle”);
    } $ solve

@@ -1561,8 +1561,8 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 134 "parser/parser.y"
     { (yyval.program) = (yyvsp[(1) - (1)].func_def);
-       // std::cout << "AST: " << *$1<<std::endl; 
-       // $1->sem(); 
+        std::cout << "AST: " << *(yyvsp[(1) - (1)].func_def)<<std::endl; 
+        (yyvsp[(1) - (1)].func_def)->sem(); 
         std::cout<<"SEM COMPLETED"<<std::endl;
         (yyvsp[(1) - (1)].func_def)->preCompile();
         std::cout<<"preCompile COMPLETED"<<std::endl;

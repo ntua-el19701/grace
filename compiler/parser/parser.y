@@ -132,8 +132,8 @@ FunctionTable ft;
 program:
         func_def 
         { $$ = $1;
-       // std::cout << "AST: " << *$1<<std::endl; 
-       // $1->sem(); 
+        std::cout << "AST: " << *$1<<std::endl; 
+        $1->sem(); 
         std::cout<<"SEM COMPLETED"<<std::endl;
         $1->preCompile();
         std::cout<<"preCompile COMPLETED"<<std::endl;

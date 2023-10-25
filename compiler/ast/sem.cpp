@@ -2,6 +2,8 @@
 
 #include "ast.hpp"
 #include <vector>
+#include <stack>
+
 Typos prevType; // used for comma id gen
 vector<int> functions; //vector that contains each return value of every function
 bool returned = false; //flag to check if function returns correctly
@@ -13,14 +15,17 @@ bool constFlag = 0;
 int arrayFlag = 0; //used to see if a parameter is an array in L value
 int arrayIndex = -1; //used to check arrayIndex
 bool main_found = false;
-bool func_has_body = false;
+bool func_has_body = false; ///used to separate Func_decl -> false with Func_def -> true 
 bool check_if_array=false;
-bool expr_is_lvalue=false;
-int array_dimension_counter=0;
+bool expr_is_id=false;
+int array_dimension_counter=0; ///Used in Var_def , Fpar_def , Comma_id_gen , Mytype in order to find Array Dimensions When Declaring the variable
 bool check_completed=false;
 bool from_assign = false;
+bool visited = false;
 Typos keep_type;
 string keepidname;
+
+int dimensions_keep = -1;
 
 std::vector<ParameterEntry> vec;    /// used in HEADER, Fpar_def , Fpar_def_gen
 std::vector<ParameterEntry> fcallparams; // used for func_Call
@@ -218,14 +223,7 @@ void Var_def::sem() {
     
     //get arraysize in Var_def declaration , add to the scope
     arraySize = 0;
-/*
-    if(type->getTypeGen() != nullptr){
-        arraySize = type->getTypeGen()->getSize();
-         //add in symbol table with arr
-    }
-    
-    st.insert(id.getName(), type->getTypos(), ENTRY_VARIABLE, arraySize);
-*/
+
     array_dimension_counter = 0;
     type->sem();
 
@@ -237,7 +235,7 @@ void Var_def::sem() {
         idGenFlag = false;
         comma_id_gen->sem();
     }
-    //st.printST();
+    
 }
 
 /*
@@ -245,69 +243,41 @@ void Var_def::sem() {
 */
 // Comes from Fpar_def , does the same work for each (,)
 void Comma_id_gen::sem() {
-    if(idGenFlag == 0) {
+    if(idGenFlag == 0) {    /// Comes From Val_Def
+        std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<prevType<<" Dimensions: "<<array_dimension_counter<<std::endl;
         st.insert(name.getName(),prevType ,ENTRY_VARIABLE, array_dimension_counter); 
     }
-    else{
-       // st.insert(name.getName(),prevType ,ENTRY_PARAMETER, arraySize); 
+    else{           ///comes from Fpar_def      
+      std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<prevType<<" Dimensions: "<<array_dimension_counter<<std::endl;
         vec.push_back(ParameterEntry(prevType, name.getName(), array_dimension_counter));
     }
     if(comma_id_gen!=nullptr)     
        comma_id_gen->sem();
 }
+
+
 int arr_dimension_size_counter=0;
 int array_expected_dimension_size;
+int dimensions_found = 0;
 /*
     ASSIGN
 */
 void Assign::sem() {
     
-    check_completed=false;
-    from_assign = true;
-    arr_dimension_size_counter=0;
+    dimensions_found = 0;
+    visited = false;
+    check_if_array = true;
+
+    expr ->sem();
+     if(visited) dimensions_found ++ ;   /// if expr is String then +1 dimension
+    
     l_value->sem();
     type = l_value->type;
    
     //std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
     //std::cout<<"Real Dimensions:"<<arr_dimension_size_counter<<std::endl;
-    expr->check_type(type); // check that the assigned type is the same as the type of the id
 
-    if(check_completed==false){
-
-        if(check_if_array==true){
-            if(array_expected_dimension_size!=arr_dimension_size_counter){
-                std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
-                std::cout<<"Real Dimensions:"<<arr_dimension_size_counter<<std::endl;
-                yyerror("Dimensions are wrong !", keepidname);
-            }
-            arr_dimension_size_counter=0;
-        }
-        else{
-
-            if(arr_dimension_size_counter > 0){
-                if(array_expected_dimension_size!=arr_dimension_size_counter){
-                    std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
-                    std::cout<<"Real Dimensions:"<<arr_dimension_size_counter<<std::endl;
-                    yyerror("Dimensions are wrong !", keepidname);
-                }
-                array_dimension_counter = 0;
-            }
-            else
-                array_dimension_counter = array_expected_dimension_size;
-
-
-        }
-        check_completed = true;
-         std::cout<<"OKAY"<<std::endl;
-        
-    }
-     from_assign = false;
-     //check_if_array = true;
-
-   
-    //expr->sem();
-  
-    
+    expr->check_type(l_value->type); // check that the assigned type is the same as the type of the id
 
 }
 
@@ -317,90 +287,66 @@ void Assign::sem() {
 
 
 void L_value::sem(){
-    
-    expr_is_lvalue=true;
+ 
     if(flag == 1){
-        idflag = 1;
+        expr_is_id = true; 
         SymbolEntry *e = st.lookup(id.getName()); /// find Symbol
 
+        std::cout<<"ID: "<<id.getName()<<std::endl;
+
         array_expected_dimension_size = e->arraySize;
-      //  std::cout<<array_expected_dimension_size<<std::endl;
         type = e->type;
         keep_type = e->type;
         keepidname=id.getName();
-
-        if((type == TYPE_int)&&(from_assign==true)){
-        idAfterArr ++;     //if this goes to 3 then it means we have x[i]
-      
         
         if(check_if_array==true){
-            if(array_expected_dimension_size!=arr_dimension_size_counter){
+            if(array_expected_dimension_size!=dimensions_found){
                 std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
-                std::cout<<"Real Dimensions:"<<arr_dimension_size_counter<<std::endl;
+                std::cout<<"Real Dimensions:"<<dimensions_found<<std::endl;
                 yyerror("Dimensions are wrong !", id.getName());
             }
-            arr_dimension_size_counter=0;
+            dimensions_found=0;
         }
         else{
 
-            std::cout<<"eimai dame:size= "<<array_dimension_counter<<" "<<array_expected_dimension_size<<std::endl;
+           // std::cout<<"eimai dame:size= "<<dimensions_found<<" "<<array_expected_dimension_size<<std::endl;
 
-            if(arr_dimension_size_counter > 0){
-                if(array_expected_dimension_size!=arr_dimension_size_counter){
+            if(dimensions_found > 0){
+                if(array_expected_dimension_size!=dimensions_found){
                     std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
-                    std::cout<<"Real Dimensions:"<<arr_dimension_size_counter<<std::endl;
+                    std::cout<<"Real Dimensions:"<<dimensions_found<<std::endl;
                     yyerror("Dimensions are wrong !", id.getName());
                 }
-                array_dimension_counter = 0;
+
+                dimensions_found = 0;
+                if(dimensions_keep==-1) dimensions_keep = 0;
             }
             else
-                array_dimension_counter = array_expected_dimension_size;
+                if(dimensions_keep==-1) dimensions_keep = array_expected_dimension_size;
 
 
         }
-        check_completed = true;
-        }
+     
         
-
-//        if(arrayFlag == 1) { // this means that this id must be an integer
- //           arrayFlag ++;
- //           if(e->arraySize == 0){
- //                yyerror("This is not an array ", id.getName());
-  //          }
-  //      }
-  //      else
-  //      if((e->arraySize >0)&&(check_if_array==true)){
-   //          yyerror("This must be array ", id.getName());
-   //     }
-      //  std::cout<<id.getName()<< " "<<type<<" ";
+        
     }
-    else if(flag == 2){
-        //expr_is_lvalue=false;
-        //type = TYPE_const_string;
-        // std::cout<<"dame"<<std::endl;
-        arr_dimension_size_counter++;
-        //type = TYPE_const_char;
+    else if(flag == 2){ ///comes only from px. x <- "hi";
+
         type = TYPE_char;
+        visited = true;
+
     }
     else if(flag == 3) {//array
-        arr_dimension_size_counter++;
-        idAfterArr ++;
+
+       dimensions_found ++;
         l_value->sem();
 
-        arr_dimension_size_counter = 0; 
+       dimensions_found = 0;  ///reset
 
         expr->sem();
-        
-    
-        expr->arrayCheck(); // checks the type index of the array
-      //  if(arrayIndex >= st.lookup(l_value->getName())->arraySize || arrayIndex < 0){
-      //      yyerror("Wrong Array Index! ", l_value->getName());
-       // }
-        arrayIndex = -1;
+        expr->arrayCheck();
         type = l_value->type;
-        
-        
-        arr_dimension_size_counter = 0; // set this to 0 for the others
+        dimensions_found = 0; // reset
         
         
     }
@@ -504,21 +450,6 @@ void Fpar_def::sem(){
 
 
     //Find arraySize
-    arraySize = 0;
-/*
-    // if the parameter is Array[] => arraySize = -1 
-    if(fpar_type->getArray() == 1){
-      arraySize = -1; // char[] or int[] => arraySize = -1;
-    }
-    else if(fpar_type->getArray() == 0){
-       if(fpar_type->getTypeGen()!= nullptr)
-         arraySize = fpar_type->getTypeGen()->getSize(); // char[10] =>arraySize = 10;
-    }
-    //else arraySize  = 0 =>for not arrays
-     
-    vec.push_back(ParameterEntry(fpar_type->getType(),name.getName(), arraySize));
-
-    */
 
    array_dimension_counter=0;
    if(fpar_type->getArray() == 1){
@@ -526,7 +457,9 @@ void Fpar_def::sem(){
     }
     
     fpar_type->sem();
-    std::cout<<array_dimension_counter<<endl;
+    
+    std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<fpar_type->getType()<<" Dimensions: "<<array_dimension_counter<<std::endl;
+
     vec.push_back(ParameterEntry(fpar_type->getType(),name.getName(), array_dimension_counter));
  //   st.insert(name.getName(),fpar_type->getType(), ENTRY_PARAMETER, arraySize);
     
@@ -604,27 +537,28 @@ void Func_call_expr::sem(){
    }
 
    check_if_array = false;
-   expr_is_lvalue=false;
+   expr_is_id = false;
+   visited = false;
   
-   array_dimension_counter = 0;
+   dimensions_found = 0;
+   dimensions_keep = -1;
+   constFlag = false;
 
    if(expr != nullptr){
-    idAfterArr = 0;
     expr->findType();
-   
 
-   // if(idflag == 1 && constFlag == 0){ //if the expression is an id
-     if(expr_is_lvalue){  
-         SymbolEntry *e = st.lookup(expr->getName()); //find if it exists  
-         std::cout<<"ID NAME: "<<expr->getName()<<" DIMENSIONS= "<<array_dimension_counter<<std::endl;
-        fcallparams.push_back(ParameterEntry(e->type, expr->getName(), array_dimension_counter ));
-        expr_is_lvalue=false;
+    if(visited) dimensions_found++;  ///string
+   
+       if(expr_is_id){  
+        fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_keep ));
         }
     
     
     else{
-          std::cout<<"CONSTANT ID: Dimensions = 0"<<std::endl;
-        fcallparams.push_back(ParameterEntry(expr->type, "const", 0));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
+        dimensions_found=0;
+         if(visited) dimensions_found++;  ///string
+          std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
+        fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_found));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
         
         }       
     if(comma_expr_gen != nullptr){
@@ -649,7 +583,9 @@ void Func_call_expr::sem(){
    }
    }
    
-}
+    
+   
+}   
 
 void Func_call_expr::arrayCheck(){
 
@@ -663,32 +599,33 @@ void Func_call_expr::arrayCheck(){
     COMMA EXPR GEN
 */
 void Comma_expr_gen::sem(){
-   check_if_array = false;
-   expr_is_lvalue=false;
+    check_if_array = false;
+   expr_is_id = false;
+   visited = false;
   
-   array_dimension_counter = 0;
+   dimensions_found = 0;
+   dimensions_keep = -1;
+   constFlag = false;
 
    if(expr != nullptr){
-    idAfterArr = 0;
     expr->findType();
-   
-   
 
-   // if(idflag == 1 && constFlag == 0){ //if the expression is an id
-     if(expr_is_lvalue){  
-         std::cout<<"ok"<<std::endl;
-         SymbolEntry *e = st.lookup(expr->getName()); //find if it exists  
-        std::cout<<"ID NAME: "<<expr->getName()<<" DIMENSIONS= "<<array_dimension_counter<<std::endl;
-        fcallparams.push_back(ParameterEntry(e->type, expr->getName(), array_dimension_counter ));
-        expr_is_lvalue=false;
+    if(visited) dimensions_found++;  ///string
+   
+      if(expr_is_id){  
+        fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_keep ));
         }
     
     
     else{
-          std::cout<<"CONSTANT ID: Dimensions = 0"<<std::endl;
-        fcallparams.push_back(ParameterEntry(expr->type, "const", 0));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
+        dimensions_found=0;
+         if(visited) dimensions_found++;  ///string
+          std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
+        fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_found));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
         
-        }       
+        }
+
+
     if(comma_expr_gen != nullptr){
        comma_expr_gen->sem();
     }
@@ -720,30 +657,28 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
    }
 
    check_if_array = false;
-   expr_is_lvalue=false;
+   expr_is_id = false;
+   visited = false;
   
-   array_dimension_counter = 0;
+   dimensions_found = 0;
+   dimensions_keep = -1;
    constFlag = false;
 
    if(expr != nullptr){
-    idAfterArr = 0;
     expr->findType();
-   
-     std::cout<<"here"<<std::endl;
-    
 
-   // if(idflag == 1 && constFlag == 0){ //if the expression is an id
-     if(expr_is_lvalue){  
-         SymbolEntry *e = st.lookup(expr->getName()); //find if it exists  
-         std::cout<<"ID NAME: "<<expr->getName()<<" DIMENSIONS= "<<array_dimension_counter<<std::endl;
-        fcallparams.push_back(ParameterEntry(e->type, expr->getName(), array_dimension_counter ));
-        expr_is_lvalue=false;
+    if(visited) dimensions_found++;  ///string
+   
+     if(expr_is_id){  
+        fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_keep ));
         }
     
     
     else{
-          std::cout<<"CONSTANT ID: Dimensions = 0"<<std::endl;
-        fcallparams.push_back(ParameterEntry(expr->type, "const", 0));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
+        dimensions_found=0;
+         if(visited) dimensions_found++;  ///string
+          std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
+        fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_found));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
         
         }       
     if(comma_expr_gen != nullptr){

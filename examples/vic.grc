@@ -1,17 +1,12 @@
 fun main():nothing
 
-fun solve(t1,t2 : int ) : int 
-    var m : int;
-{
-    m <- t1 + t2;
-    return m;
+fun aris(y,z : int): nothing
+ var x : int;
+ {
+   
+    y <- x;
+    
 }
-
-var x,y,z :int;
-
 {
-    y<-5;
-    z<-7;
-   x<- solve(y,z);
 
 }

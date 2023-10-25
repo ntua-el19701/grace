@@ -6,10 +6,15 @@ std::stack <llvm::BasicBlock*> pattern;
 
 string active_fun="emptyfun";
 
+llvm::Function *function;
+
 
 std::vector < llvm :: Type * > args; /// parameters to insert
-std::vector < std::string > args_name; ///name of parameters
+std::vector < std::string > args_name; ///name of parameters in the function
 std::vector < llvm:: Value * > params; /// parameters to call a function
+
+
+std::vector <llvm:: Value*> vec_args;
 
 
 std::string find_parents(std::string child){
@@ -20,7 +25,7 @@ std::string find_parents(std::string child){
 
 bool is_assign=false;
 bool is_integer=true;
-int args_counter=0;
+int args_counter=0; ///number of parameters in the function
 
 void printThat(){
 
@@ -111,6 +116,7 @@ Value * Header::compile() {
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, entry, function);  //define the first BB
     Builder.SetInsertPoint(BB);
     activeBB=BB;
+    vec_args.clear();
 
     for(auto i=0;i<args_counter;i++){
 
@@ -118,6 +124,9 @@ Value * Header::compile() {
 
         llvm::Value *Arg = function->getArg(i);
 
+        vec_args.push_back(function->getArg(i));
+
+    /*
         llvm::Value *lhs;
         llvm::Value *rhs;
        
@@ -136,7 +145,7 @@ Value * Header::compile() {
         rhs = Arg;//Builder.CreateLoad(Type::getInt8Ty(TheContext), Arg);
         Builder.CreateStore(rhs, lhs); 
     }
-
+        */
     }
 
 
@@ -249,7 +258,7 @@ Value * Fpar_type::compile(){
 
 Value * L_value::compile(){
     if(flag == 1){ /// id
-        cout<<"dame: "<<id.getName()<<std::endl;
+        
         //id.compile();
     if(is_assign){
 
@@ -257,10 +266,42 @@ Value * L_value::compile(){
     std::string var_name = active_fun + "-" + name;
     std::cout<<var_name<<std::endl; 
     
+
+    int c=-1;
+
+    for(auto i=0;i<args_counter;i++){
+
+        if(var_name==args_name[i]){
+            c=i;
+            cout<<"Found:"<<c<<std::endl;
+        }
+    }
+
+
     int var_type = vartype[var_name];
     int var_pos = vars[var_name];
 
     std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
+
+    if(c!=-1){   ///variable is argument
+
+
+        llvm::Value *Arg = vec_args[c];
+            
+        llvm::Value* v;
+
+        
+        Value * array[] = {Arg};
+
+    if(var_type==0){ ///INTEGER
+
+       // llvm::PointerType* pointerType = Arg->getType();
+        return Builder.CreateGEP(Arg->getType(),Arg,c32(0),  name);
+       // return Arg;
+    }
+
+    }
+    else{
     if(var_type==0){ ///INTEGER
         llvm::PointerType* pointerType = TheVarsInt->getType();
         return Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
@@ -273,6 +314,9 @@ Value * L_value::compile(){
         return  Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), name);
 
     }
+    return nullptr;
+    }
+
 
     }
     else
@@ -476,6 +520,16 @@ Value * Id::compile(){
     std::string var_name = active_fun + "-" + name;
     std::cout<<var_name<<std::endl; 
 
+    int c=-1;
+
+    for(auto i=0;i<args_counter;i++){
+
+        if(var_name==args_name[i]){
+            c=i;
+            cout<<"Found:"<<c<<std::endl;
+        }
+    }
+
    // char onoma[] = { name, '_', 'p', 't', 'r', '\0' };
     
    // std::cout<<"heree";
@@ -485,7 +539,40 @@ Value * Id::compile(){
 
    // printThat();
    
+   if(c!=-1){   ///variable is argument
 
+
+        llvm::Value *Arg = vec_args[c];
+            
+        llvm::Value* v;
+    if(var_type==0){ ///INTEGER
+      
+       // llvm::PointerType* pointerType = TheVarsInt->getType();
+      //  v = Builder.CreateGEP(pointerType, Arg, c32(0), name);
+        
+        return Arg; 
+       //return  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
+       // llvm::PointerType* pointerType = TheVarsInt->getType();
+       // lhs = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos));
+       // rhs = Arg;//Builder.CreateLoad(Type::getInt32Ty(TheContext), function->getArg(i));
+       // Builder.CreateStore(rhs, lhs); 
+    }
+    else
+    if(var_type==1){ ///CHAR
+       return Arg;
+       //return Builder.CreateLoad(Type::getInt8Ty(TheContext), Arg, var_name);
+       // llvm::PointerType* pointerType = TheVarsChar->getType();
+       // lhs = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos));
+       // rhs = Arg;//Builder.CreateLoad(Type::getInt8Ty(TheContext), Arg);
+       // Builder.CreateStore(rhs, lhs); 
+    }
+    else
+    return nullptr;
+
+
+
+   }
+    else{  ///variable is not argument
     llvm::Value* v;
     std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
     if(var_type==0){ ///INTEGER
@@ -501,7 +588,8 @@ Value * Id::compile(){
         return Builder.CreateLoad(Type::getInt8Ty(TheContext), v, name);
 
     }
-  
+    return nullptr;
+    }
    // onoma[1] = '\0';
     return nullptr;
    // return Builder.CreateLoad(v, name);

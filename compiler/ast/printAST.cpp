@@ -4,7 +4,7 @@
     CONST_CHAR
 */
 void Const_char::printAST(std::ostream &out) const  { //something goes wrong here
-    out << "Const_Char(" << str << ")";
+    out << "Const_Char(" << str[1] << ")";
   }
 
 /*
@@ -206,7 +206,9 @@ void Assign::printAST(std::ostream &out) const  {
         IF
 */
 void If::printAST(std::ostream &out) const  {
-        out << "If(" << *condition << ", " << *stmt1;
+        
+        out << "If(" << *condition ;
+        if(stmt1 != nullptr) out << ", " << *stmt1;
         if(stmt2 != nullptr) out << ", " << *stmt2;
         out << ")";
     }
