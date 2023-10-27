@@ -12,6 +12,9 @@ using namespace std;
 extern int lineno;
 extern int int_counter;
 extern int char_counter;
+extern int array_int_counter;
+extern int array_char_counter;
+
 
 SymbolTable st;
 FunctionTable ft;

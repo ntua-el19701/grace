@@ -9,6 +9,8 @@ std::unique_ptr<legacy::FunctionPassManager> AST::TheFPM;
 GlobalVariable *AST::TheNL;
 GlobalVariable *AST::TheVarsInt;
 GlobalVariable *AST::TheVarsChar;
+GlobalVariable *AST::TheVarsIntArray; //for Varaibles Int Arrays
+GlobalVariable *AST::TheVarsCharArray; //for Variables Char Arrays
 Function *AST::TheWriteInteger;
 Function *AST::TheWriteString;
 

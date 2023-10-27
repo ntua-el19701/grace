@@ -14,6 +14,8 @@ extern std::map < std::string , std::string > parent;   ///Find the previus func
 extern std::map < std::string , int > vars; /// Find the position of variable in VARS
 extern std::map < std::string , int > vartype;  /// Find the Type - REF for variable/parameter
 extern std::map < std::string , bool > varref;
+extern std::map < std::string , int > maparrayint;
+extern std::map < std::string , int > maparraychar;
 
 
 class Id;

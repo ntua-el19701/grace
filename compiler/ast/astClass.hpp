@@ -18,6 +18,14 @@
 using namespace llvm;
 extern int int_counter;
 extern int char_counter; 
+extern int array_int_counter;
+extern int array_char_counter;
+extern int array_int_size;
+extern int array_char_size;
+
+extern std::map < std::string , int > maparrayint;
+extern std::map < std::string , int > maparraychar;
+
 extern std::stack <llvm::BasicBlock*> pattern;
 extern llvm::BasicBlock *activeBB;
 
@@ -49,6 +57,7 @@ public:
     i64 = IntegerType::get(TheContext, 64);
 
 
+  // Initialize global variables Array Int
   llvm::ArrayType *vars_type_int = ArrayType::get(i32, int_counter+5);
     TheVarsInt = new GlobalVariable(
       *TheModule, vars_type_int, false, GlobalValue::PrivateLinkage,
@@ -56,14 +65,43 @@ public:
     TheVarsInt->setAlignment(llvm::MaybeAlign(16));
 
 
-
-    
    // Initialize global variables Array Char
     llvm::ArrayType *vars_type_char = ArrayType::get(i8, char_counter+5);
     TheVarsChar = new GlobalVariable(
       *TheModule, vars_type_char, false, GlobalValue::PrivateLinkage,
       ConstantAggregateZero::get(vars_type_char), "vars_char");
     TheVarsChar->setAlignment(llvm::MaybeAlign(16));
+
+
+    //Create Array-Integers
+    std::cout<<array_int_size<<std::endl;
+
+    
+      llvm::ArrayType *vars_type_array_int = ArrayType::get(i32, array_int_size+5 );
+    TheVarsIntArray = new GlobalVariable(
+      *TheModule, vars_type_array_int, false, GlobalValue::PrivateLinkage,
+      ConstantAggregateZero::get(vars_type_array_int), "Array_Int_vars");
+    TheVarsIntArray->setAlignment(llvm::MaybeAlign(16));
+    
+    
+    int counter=0;
+    std::string name="main-f";
+    for(const auto& pair: maparrayint){
+    std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+ 
+    if(pair.first==name){
+      std::cout<<counter<<" "<<pair.second<<std::endl;
+    }
+
+       counter+=pair.second;
+    }
+    
+    //Create Array-Chars
+      llvm::ArrayType *vars_type_array_char = ArrayType::get(i8, array_char_size+5);
+    TheVarsCharArray = new GlobalVariable(
+      *TheModule, vars_type_array_char, false, GlobalValue::PrivateLinkage,
+      ConstantAggregateZero::get(vars_type_array_char), "Array_Char_vars");
+    TheVarsCharArray->setAlignment(llvm::MaybeAlign(16));
 
 
     // Initialize global variables (new line)
@@ -133,7 +171,9 @@ protected:
 
   static GlobalVariable *TheNL; //for new line
   static GlobalVariable *TheVarsInt; //for Variables Integers
+  static GlobalVariable *TheVarsIntArray; //for Varaibles Int Arrays
   static GlobalVariable *TheVarsChar; //for Variables Char
+  static GlobalVariable *TheVarsCharArray; //for Variables Char Arrays
 
   static Function *TheWriteInteger;
   static Function *TheWriteString;

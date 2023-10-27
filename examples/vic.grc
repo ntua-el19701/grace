@@ -1,12 +1,22 @@
 fun main():nothing
 
-fun aris(y,z : int): nothing
+
+var pin,array: int[10];
+var t:char [15];
+var f:int[5];
+var za:int;
+
+fun aris(ref y,z : int;o : char; ref f : char ; p,j : int): nothing
  var x : int;
+ var d : char;
  {
-   
-    y <- x;
+  
+    x <- z;
+    z <- y + p - z;
     
 }
 {
+    za <- 5;
 
+  
 }

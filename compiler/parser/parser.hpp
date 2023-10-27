@@ -77,7 +77,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 21 "parser/parser.y"
+#line 24 "parser/parser.y"
    
    AST *program;
    int num;
