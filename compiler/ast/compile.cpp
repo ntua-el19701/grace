@@ -4,17 +4,25 @@
 llvm::BasicBlock *activeBB;
 std::stack <llvm::BasicBlock*> pattern;
 
+stack < bool > has_return;
+stack < bool > after_created;
+
+
 string active_fun="emptyfun";
 
 llvm::Function *activefunction;
 
+Typos keepheadertype;
 
-std::vector < llvm :: Type * > args; /// parameters to insert
+
+std::vector < llvm :: Type * > args; /// parameters to insert (reference + kanoniko)
 std::vector < std::string > args_name; ///name of parameters in the function
 std::vector < llvm:: Value * > params; /// parameters to call a function
 
+std::map < std::string , std::vector < bool > > func_ref;
 
-std::vector <llvm:: Value*> vec_args;
+
+std::vector <bool> args_ref; // true: argument is reference , false: argument not reference
 
 
 std::string find_parents(std::string child){
@@ -23,8 +31,17 @@ std::string find_parents(std::string child){
 
 }
 
+std::string header_name;
+
 bool is_assign=false;
 bool is_integer=true;
+bool from_func_call=false;
+bool from_func_decl=false;
+
+bool return_found = false; ///for if then else
+
+
+int position=0;
 int args_counter=0; ///number of parameters in the function
 
 void printThat(){
@@ -62,10 +79,23 @@ Value * Func_def::compile (){
     header -> compile();
     if(local_def_gen != nullptr) local_def_gen->compile();
 
+    keepheadertype=header->getRetType()->getTypos();
 
     block -> compile();
 
     if(header->getRetType()->getTypos() == 2){ Builder.CreateRetVoid(); }
+    /*
+    else
+    if(activeBB->empty()==true){
+        
+        if(header->getRetType()->getTypos() == 0){ Builder.CreateRet(c32(0)); }
+        if(header->getRetType()->getTypos() == 1){ Builder.CreateRet(c8('A')); }
+        if(header->getRetType()->getTypos() == 2){ Builder.CreateRetVoid(); }
+        
+        
+    }
+    */
+
     active_fun = find_parents(active_fun);
     activeBB = pattern.top();
     Builder.SetInsertPoint(activeBB);
@@ -78,7 +108,10 @@ Value * Header::compile() {
    
     args.clear(); /// empty the vector
     args_name.clear();
+    args_ref.clear();
     args_counter=0;
+
+    if(from_func_decl==false){
 
     pattern.push(activeBB);
     std::string name = nam.getName();
@@ -116,39 +149,55 @@ Value * Header::compile() {
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, entry, function);  //define the first BB
     Builder.SetInsertPoint(BB);
     activeBB=BB;
-    vec_args.clear();
+    
     activefunction=function;
+
+    func_ref[name]=args_ref;
 
     for(auto i=0;i<args_counter;i++){
 
         int var_pos = vars[args_name[i]];
 
-        llvm::Value *Arg = function->getArg(i);
+    }
 
-        vec_args.push_back(function->getArg(i));
+    }
+    else{
+         std::string name = nam.getName();
+    active_fun=name;
 
-    /*
-        llvm::Value *lhs;
-        llvm::Value *rhs;
-       
-    if(args[i]==i32){ ///INTEGER
-      
-        llvm::PointerType* pointerType = TheVarsInt->getType();
-        lhs = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos));
-        rhs = Arg;//Builder.CreateLoad(Type::getInt32Ty(TheContext), function->getArg(i));
-        Builder.CreateStore(rhs, lhs); 
+    if(fpar_def != nullptr) fpar_def->compile();
+    if(fpar_def_gen != nullptr) fpar_def_gen->compile();
+
+
+    llvm::FunctionType *function_type ; 
+
+
+    int fun_type = ret_type->getTypos();
+    
+    
+    if(fun_type==0){ ///RETURN INT
+          function_type= llvm::FunctionType::get(i32, args, false);
     }
     else
-    if(args[i]==i8){ ///CHAR
-       
-        llvm::PointerType* pointerType = TheVarsChar->getType();
-        lhs = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos));
-        rhs = Arg;//Builder.CreateLoad(Type::getInt8Ty(TheContext), Arg);
-        Builder.CreateStore(rhs, lhs); 
+    if(fun_type==1){ ///RETURN CHAR
+          function_type= llvm::FunctionType::get(i8, args, false);
     }
-        */
+    else
+    if(fun_type==2){ ///RETURN NOTHING
+          function_type= llvm::FunctionType::get(Type::getVoidTy(TheContext), args, false);
     }
+    else
+          function_type= llvm::FunctionType::get(i32, args, false);
 
+    std::string entry = active_fun+"-entry";
+  
+    llvm::Function *function =
+    llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
+                    active_fun, TheModule.get());
+
+     func_ref[name]=args_ref;
+
+    }
 
     return nullptr;
 }
@@ -168,8 +217,8 @@ Value * Block::compile(){
 Value * Local_def::compile(){    
     if (func_def != nullptr)
         func_def->compile();
-    else if(func_decl != nullptr){}
-      //  func_decl->compile();
+    else if(func_decl != nullptr)
+        func_decl->compile();
     else if(var_def != nullptr)
         var_def->compile();
     else{
@@ -179,7 +228,11 @@ Value * Local_def::compile(){
 }
 
 Value * Func_decl::compile(){
+    
+    from_func_decl=true;
     header->compile();
+    from_func_decl=false;
+
     return nullptr;
 }
 
@@ -204,9 +257,13 @@ Value * Comma_id_gen::compile(){
 
         if(varref[par_name]==true){
         args.push_back(Builder.getInt32Ty()->getPointerTo());  //if reference
+        args_ref.push_back(true);
     }
-    else
+    else{
     args.push_back(i32);
+    args_ref.push_back(false);
+
+    }
     }
     
 
@@ -214,9 +271,12 @@ Value * Comma_id_gen::compile(){
 
         if(varref[par_name]==true){
         args.push_back(Builder.getInt8Ty()->getPointerTo());  //if reference
+        args_ref.push_back(true);
     }
-    else
+    else{
     args.push_back(i8);
+    args_ref.push_back(false);
+    }
 
 
     }
@@ -225,6 +285,7 @@ Value * Comma_id_gen::compile(){
     args_counter++;
 
     args_name.push_back(par_name);
+
 
 
     if(comma_id_gen != nullptr) comma_id_gen -> compile();
@@ -249,10 +310,13 @@ Value * Fpar_def::compile(){
 
     if(varref[par_name]==true){
         args.push_back(Builder.getInt32Ty()->getPointerTo());  //if reference
+        args_ref.push_back(true);
     }
-    else
+    else{
    //args.push_back(Builder.getInt32Ty()->getPointerTo()); if reference
     args.push_back(i32);
+    args_ref.push_back(false);
+    }
     
    }
 
@@ -261,9 +325,12 @@ Value * Fpar_def::compile(){
 
     if(varref[par_name]==true){
         args.push_back(Builder.getInt8Ty()->getPointerTo());  //if reference
+        args_ref.push_back(true);
     }
-    else
+    else{
     args.push_back(i8);
+    args_ref.push_back(false);
+    }
      }
 
     args_counter++;
@@ -303,7 +370,7 @@ Value * L_value::compile(){
 
         if(var_name==args_name[i]){
             c=i;
-            cout<<"Found:"<<c<<std::endl;
+           
         }
     }
 
@@ -316,7 +383,7 @@ Value * L_value::compile(){
     if(c!=-1){   ///variable is argument
 
 
-        llvm::Value *Arg = vec_args[c];
+       bool ref = args_ref[c];
             
         llvm::Value* v;
 
@@ -352,9 +419,10 @@ Value * L_value::compile(){
 
 
     }
-    else
+    else{
+       
     return id.compile();
-
+    }
         
     } // kati me id
         
@@ -380,18 +448,25 @@ Value * Assign::compile(){
 }
 
 Value * Func_call_stmt::compile(){
-    /*id.compile();
-    if(expr!=nullptr) expr->compile();
-    if(comma_expr_gen != nullptr) comma_expr_gen->compile();
-    return nullptr;*/
-    
+   
     Value *v;
     params.clear();
 
+    header_name = id.getName();
+    position=0;
+
     if(expr!=nullptr) {
         
+        if(func_ref[header_name][position]==false)
         v = expr->compile();
         
+        else{
+            std::cout<<"REFERENCE";
+            from_func_call=true;
+              v = expr->compile();
+              from_func_call=false;
+        }
+        position++;
         params.push_back(v);
     }
     if(comma_expr_gen != nullptr) comma_expr_gen->compile();
@@ -400,7 +475,23 @@ Value * Func_call_stmt::compile(){
 }
 
 Value * Comma_expr_gen::compile(){
-    Value* v = expr->compile();
+   
+   Value * v;
+    
+        
+        if(func_ref[header_name][position]==false)
+        v = expr->compile();
+        
+        else{
+            std::cout<<"REFERENCE";
+            from_func_call=true;
+              v = expr->compile();
+              from_func_call=false;
+        }
+
+    position++;
+      
+    
         
     params.push_back(v);
     if(comma_expr_gen != nullptr) comma_expr_gen->compile();
@@ -408,15 +499,10 @@ Value * Comma_expr_gen::compile(){
 }
 
 Value * If::compile(){
-    /*condition->compile();
-    if(stmt1!=nullptr)
-        stmt1->compile();
-    if (stmt2 != nullptr) { stmt2->compile(); }
-    return nullptr;*/
+    
     llvm::Value *condValue = condition->compile();
     llvm::Value *cond = Builder.CreateICmpNE(condValue, c1(false), "if_cond");
-    //llvm::Value *thenValue = nullptr;
-  //  llvm::Value *elseValue = nullptr;
+   
     
     llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
     llvm::BasicBlock *ThenBB = llvm::BasicBlock::Create(TheContext, "then", TheFunction);
@@ -427,15 +513,47 @@ Value * If::compile(){
     Builder.CreateCondBr(cond, ThenBB, ElseBB);
     
     Builder.SetInsertPoint(ThenBB);
+    
+    has_return.push(false);
+    after_created.push(false);
+
     if(stmt1 != nullptr)
     stmt1->compile();
     ThenBB = Builder.GetInsertBlock();
+
+    if(has_return.top()==false){
     Builder.CreateBr(AfterBB);
+    after_created.pop();
+    after_created.push(true);
+    has_return.pop();
+    }
+
+    has_return.push(false);
     Builder.SetInsertPoint(ElseBB);
     if(stmt2 != nullptr) stmt2->compile();
+
+    if(has_return.top()==false){
+   
     Builder.CreateBr(AfterBB);
+    after_created.pop();
+    after_created.push(true);
+    has_return.pop();
+    }
+
     Builder.SetInsertPoint(AfterBB);
 
+    if(after_created.top()==false){
+       
+        if(keepheadertype == 0){ Builder.CreateRet(c32(0)); }
+        if(keepheadertype == 1){ Builder.CreateRet(c8('A')); }
+        if(keepheadertype == 2){ Builder.CreateRetVoid(); }
+        
+        
+
+    }   
+
+    after_created.pop();
+ 
 
     return nullptr;
   
@@ -481,6 +599,11 @@ Value * Return::compile(){
     Value *r = nullptr; 
     if(expr!=nullptr) r=expr->compile();
     Builder.CreateRet(r); 
+    
+    if(has_return.empty()==false){
+        has_return.pop();
+        has_return.push(true);
+    }
     return nullptr;
     
 }
@@ -489,11 +612,29 @@ Value * Func_call_expr::compile(){
     
     Value *v;
     params.clear();
+ 
+    header_name = id.getName();
+    position=0;
+
+    std::cout<<"header name is"<<header_name<<std::endl;
+    for(int i=0;i<func_ref[header_name].size();i++){
+        std::cout<<func_ref[header_name][i]<<" ";
+    }
+    std::cout<<endl;
+
 
     if(expr!=nullptr) {
         
+        if(func_ref[header_name][position]==false)
         v = expr->compile();
         
+        else{
+            std::cout<<"REFERENCE";
+            from_func_call=true;
+              v = expr->compile();
+              from_func_call=false;
+        }
+        position++;
         params.push_back(v);
     }
     if(comma_expr_gen != nullptr) comma_expr_gen->compile();
@@ -552,19 +693,96 @@ Value * Id::compile(){
     std::string var_name = active_fun + "-" + name;
     std::cout<<var_name<<std::endl; 
 
+    if(from_func_call){
+        
+        int c=-1;
+
+        for(auto i=0;i<args_counter;i++){
+
+            if(var_name==args_name[i]){
+                c=i;
+                std::cout<<"FOUND";
+           
+            }
+        }
+
+        int var_type = vartype[var_name];
+
+        int var_pos = vars[var_name];
+
+        if(c!=-1){    ///variable is argument
+            
+        bool ref = args_ref[c];  ///karterw deikti  // exw ref = true ara deikti alliws value
+        llvm::Value* v ; 
+    if(var_type==0){ ///INTEGER
+       
+        if(ref){
+              return activefunction->getArg(c);
+        }
+        else{
+
+            llvm::PointerType* pointerType = activefunction->getType();
+            return Builder.CreateGEP(pointerType, activefunction, c32(c), name);
+
+        }
+
+          
+       
+    }
+    else
+    if(var_type==1){ ///CHAR
+
+       if(ref){
+           return activefunction->getArg(c);
+        }
+        else
+        {
+            llvm::PointerType* pointerType = activefunction->getType();
+            return Builder.CreateGEP(pointerType, activefunction, c8(c), name);
+        }
+      
+   
+    }
+    else
+    return nullptr;
+
+   }
+   else{                ///variable is not argument
+    llvm::Value* v;
+    std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
+    if(var_type==0){ ///INTEGER
+        llvm::PointerType* pointerType = TheVarsInt->getType();
+        return Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
+        //return Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
+    }
+    else
+    if(var_type==1){ ///CHAR
+      
+        llvm::PointerType* pointerType = TheVarsChar->getType();
+        return Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), name);
+       // return Builder.CreateLoad(Type::getInt8Ty(TheContext), v, name);
+
+    }
+    return nullptr;
+    }
+
+
+
+    }
+
+    else{   /// EPISTREFW TIMI
+
     int c=-1;
 
     for(auto i=0;i<args_counter;i++){
 
         if(var_name==args_name[i]){
             c=i;
-            cout<<"Found:"<<c<<std::endl;
+           
         }
     }
 
-   // char onoma[] = { name, '_', 'p', 't', 'r', '\0' };
-    
-   // std::cout<<"heree";
+  
     int var_type = vartype[var_name];
 
     int var_pos = vars[var_name];
@@ -572,40 +790,40 @@ Value * Id::compile(){
    // printThat();
    
    if(c!=-1){   ///variable is argument
-
-
-        llvm::Value *Arg = vec_args[c];
-            
-        llvm::Value* v;
-    if(var_type==0){ ///INTEGER
       
-       // llvm::PointerType* pointerType = TheVarsInt->getType();
-      //  v = Builder.CreateGEP(pointerType, Arg, c32(0), name);
-        return activefunction->getArg(c);
-        //return Arg; * 
+        bool ref = args_ref[c];
+     
+            
+        llvm::Value* v ; 
+    if(var_type==0){ ///INTEGER
+       
+        if(ref){
+            v=activefunction->getArg(c);
+            return  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
+        }
+        else
 
-       //return  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
-       // llvm::PointerType* pointerType = TheVarsInt->getType();
-       // lhs = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos));
-       // rhs = Arg;//Builder.CreateLoad(Type::getInt32Ty(TheContext), function->getArg(i));
-       // Builder.CreateStore(rhs, lhs); 
+        return activefunction->getArg(c);
+       
     }
     else
     if(var_type==1){ ///CHAR
+
+        if(ref){
+            v=activefunction->getArg(c);
+            return  Builder.CreateLoad(Type::getInt8Ty(TheContext), v, name);
+        }
+        else
        
        return activefunction->getArg(c);
-       //return Builder.CreateLoad(Type::getInt8Ty(TheContext), Arg, var_name);
-       // llvm::PointerType* pointerType = TheVarsChar->getType();
-       // lhs = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos));
-       // rhs = Arg;//Builder.CreateLoad(Type::getInt8Ty(TheContext), Arg);
-       // Builder.CreateStore(rhs, lhs); 
+   
     }
     else
     return nullptr;
 
-
-
    }
+
+   
     else{  ///variable is not argument
     llvm::Value* v;
     std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
@@ -624,10 +842,10 @@ Value * Id::compile(){
     }
     return nullptr;
     }
-   // onoma[1] = '\0';
+ 
     return nullptr;
-   // return Builder.CreateLoad(v, name);
-    
+   
+    }
 }
 
 Value * StringConst::compile(){
@@ -636,6 +854,6 @@ Value * StringConst::compile(){
 
 Value * Const_char::compile() {
     
-    return c8(*str);
+    return c8(str[1]);
 }
 

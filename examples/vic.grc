@@ -3,20 +3,26 @@ fun main():nothing
 
 var pin,array: int[10];
 var t:char [15];
-var f:int[5];
-var za:int;
 
-fun aris(ref y,z : int;o : char; ref f : char ; p,j : int): nothing
+var za,zz:char;
+var f:int;
+
+fun aris( ref z :char; l : int): int
  var x : int;
  var d : char;
  {
   
-    x <- z;
-    z <- y + p - z;
+
+   while 2 > 3 do { x <- aris(za, 3);  x <- aris(zz, 4); }
+   x <-3 ;
+   $ x <- x + z + y;
+   $ z <- y + p - z;
+   return aris(z,1);
     
 }
 {
-    za <- 5;
-
+za <- 'a';
+   f <- aris(za,f);
+    
   
 }
