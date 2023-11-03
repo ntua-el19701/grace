@@ -85,13 +85,13 @@ public:
     
     
     int counter=0;
-    std::string name="main-f";
+    std::string name="main-array";
     for(const auto& pair: maparrayint){
     std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
  
-    if(pair.first==name){
-      std::cout<<counter<<" "<<pair.second<<std::endl;
-    }
+    //if(pair.first==name){
+    //  std::cout<<counter<<" "<<pair.second<<std::endl;
+    //}
 
        counter+=pair.second;
     }

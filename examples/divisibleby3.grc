@@ -11,15 +11,18 @@ fun main() : nothing
   var n : int;
 
   fun divisibleBy3(n : int) :int
+    var z:int;
     fun mod3is0(ref n : int) : int;
     fun mod3is1(n : int) : int;
     fun mod3is2(ref n : int) : int;
 
-    fun mod3is1(n : int) : int {
+    fun mod3is1(n : int) : int
+     {
       if n = 0 then
         return 0;
       else {
         n <- n - 1;
+        z <- 2;
         return mod3is2(n);
       }
     }
