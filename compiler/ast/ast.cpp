@@ -13,6 +13,7 @@ GlobalVariable *AST::TheVarsIntArray; //for Varaibles Int Arrays
 GlobalVariable *AST::TheVarsCharArray; //for Variables Char Arrays
 Function *AST::TheWriteInteger;
 Function *AST::TheWriteString;
+Function *AST::TheWriteChar;
 
 Type *AST::i8;
 Type *AST::i32;

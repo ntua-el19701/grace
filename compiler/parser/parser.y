@@ -135,11 +135,11 @@ FunctionTable ft;
 program:
         func_def 
         { $$ = $1;
-        std::cout << "AST: " << *$1<<std::endl; 
+       // std::cout << "AST: " << *$1<<std::endl; 
         $1->sem(); 
-        std::cout<<"SEM COMPLETED"<<std::endl;
+        //std::cout<<"SEM COMPLETED"<<std::endl;
         $1->preCompile();
-        std::cout<<"preCompile COMPLETED"<<std::endl;
+        //std::cout<<"preCompile COMPLETED"<<std::endl;
        
         $1->llvm_compile_and_dump(); 
         
@@ -225,7 +225,8 @@ stmt:
         | T_return expr ';'                                         { $$ = new Return($2); }
         | T_writeInteger '(' T_id ')' ';'                           { $$ = new Write_Integer($3, -1); }
         | T_writeInteger '(' T_const_int ')' ';'                    { $$ = new Write_Integer(nullptr, $3); }
-        | T_writeChar '(' T_id ')' ';'                              { $$ = new Write_Char($3); }
+       // | T_writeChar '(' T_id ')' ';'                              { $$ = new Write_Char($3, "`"); }
+       // | T_writeChar '(' T_const_char ')' ';'                      { $$ = new Write_Char(nullptr,$3); }
         | T_writeString '(' T_id ')' ';'                            { $$ = new Write_String($3,nullptr,0); }
         | T_writeString '(' T_const_string ')' ';'                  { $$ = new Write_String(nullptr,$3,1); }
 
@@ -305,7 +306,7 @@ cond_high:
 
 int main() {
   int result = yyparse();
-  if (result == 0) printf("Success.\n");
+ // if (result == 0) printf("Success.\n");
   return result;
 
 }

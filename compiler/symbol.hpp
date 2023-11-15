@@ -180,7 +180,7 @@ public:
     }
 
     void openScope () {
-        std::cout<<"scope opened \n"<<std::endl;
+      //  std::cout<<"scope opened \n"<<std::endl;
         size++;
         scopes.push_back(Scope());
         //std::cout<<"size of scope: "  << size;
@@ -188,7 +188,7 @@ public:
     }
 
     void closeScope () {
-        std::cout<<"scope closed \n"<<std::endl;
+     //   std::cout<<"scope closed \n"<<std::endl;
         size--;
         scopes.pop_back();
       //  std::cout<<"size of scope: " << size;

@@ -100,8 +100,8 @@ void Header::sem(){
 
     func_has_body = true;
 
-    ft.printST();
-    st.printST();
+  //  ft.printST();
+   // st.printST();
 }
 
 /*
@@ -227,7 +227,7 @@ void Var_def::sem() {
     array_dimension_counter = 0;
     type->sem();
 
-    std::cout<<"NAME: "<<id.getName()<<" TYPE: "<<type->getTypos()<<" Dimensions: "<<array_dimension_counter<<std::endl;
+    //std::cout<<"NAME: "<<id.getName()<<" TYPE: "<<type->getTypos()<<" Dimensions: "<<array_dimension_counter<<std::endl;
     st.insert(id.getName(), type->getTypos(), ENTRY_VARIABLE, array_dimension_counter);
 
     prevType = type->getTypos(); // for comma id gen
@@ -244,11 +244,11 @@ void Var_def::sem() {
 // Comes from Fpar_def , does the same work for each (,)
 void Comma_id_gen::sem() {
     if(idGenFlag == 0) {    /// Comes From Val_Def
-        std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<prevType<<" Dimensions: "<<array_dimension_counter<<std::endl;
+     //   std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<prevType<<" Dimensions: "<<array_dimension_counter<<std::endl;
         st.insert(name.getName(),prevType ,ENTRY_VARIABLE, array_dimension_counter); 
     }
     else{           ///comes from Fpar_def      
-      std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<prevType<<" Dimensions: "<<array_dimension_counter<<std::endl;
+     // std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<prevType<<" Dimensions: "<<array_dimension_counter<<std::endl;
         vec.push_back(ParameterEntry(prevType, name.getName(), array_dimension_counter));
     }
     if(comma_id_gen!=nullptr)     
@@ -292,7 +292,7 @@ void L_value::sem(){
         expr_is_id = true; 
         SymbolEntry *e = st.lookup(id.getName()); /// find Symbol
 
-        std::cout<<"ID: "<<id.getName()<<std::endl;
+     //   std::cout<<"ID: "<<id.getName()<<std::endl;
 
         array_expected_dimension_size = e->arraySize;
         type = e->type;
@@ -301,8 +301,8 @@ void L_value::sem(){
         
         if(check_if_array==true){
             if(array_expected_dimension_size!=dimensions_found){
-                std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
-                std::cout<<"Real Dimensions:"<<dimensions_found<<std::endl;
+              //  std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
+              //  std::cout<<"Real Dimensions:"<<dimensions_found<<std::endl;
                 yyerror("Dimensions are wrong !", id.getName());
             }
             dimensions_found=0;
@@ -313,8 +313,8 @@ void L_value::sem(){
 
             if(dimensions_found > 0){
                 if(array_expected_dimension_size!=dimensions_found){
-                    std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
-                    std::cout<<"Real Dimensions:"<<dimensions_found<<std::endl;
+                 //   std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
+                 //   std::cout<<"Real Dimensions:"<<dimensions_found<<std::endl;
                     yyerror("Dimensions are wrong !", id.getName());
                 }
 
@@ -458,7 +458,7 @@ void Fpar_def::sem(){
     
     fpar_type->sem();
     
-    std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<fpar_type->getType()<<" Dimensions: "<<array_dimension_counter<<std::endl;
+   // std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<fpar_type->getType()<<" Dimensions: "<<array_dimension_counter<<std::endl;
 
     vec.push_back(ParameterEntry(fpar_type->getType(),name.getName(), array_dimension_counter));
  //   st.insert(name.getName(),fpar_type->getType(), ENTRY_PARAMETER, arraySize);
@@ -557,7 +557,7 @@ void Func_call_expr::sem(){
     else{
         dimensions_found=0;
          if(visited) dimensions_found++;  ///string
-          std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
+        //  std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
         fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_found));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
         
         }       
@@ -620,7 +620,7 @@ void Comma_expr_gen::sem(){
     else{
         dimensions_found=0;
          if(visited) dimensions_found++;  ///string
-          std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
+       //   std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
         fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_found));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
         
         }
@@ -677,7 +677,7 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
     else{
         dimensions_found=0;
          if(visited) dimensions_found++;  ///string
-          std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
+       //   std::cout<<"CONSTANT ID: Dimensions = "<<dimensions_found<<std::endl;
         fcallparams.push_back(ParameterEntry(expr->type, "const", dimensions_found));  //const is a random name. It will never be used. Here the entry is a constant. Also we assume there are no constant arrays
         
         }       

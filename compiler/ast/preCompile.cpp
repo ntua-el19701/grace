@@ -172,10 +172,10 @@ void Func_def::preCompile (){
 
     prev_fun = find_parent(prev_fun);
 
-    if(prev_fun=="emptyfun"){
+    /*if(prev_fun=="emptyfun"){
         printThis();
 
-    }
+    }*/
     
 }
 

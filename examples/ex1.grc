@@ -1,8 +1,11 @@
 fun main() : nothing
 
-fun a () : nothing
-var x : int[2];
+var ilias : char;
 {
-    x[3] <-3;
+   ilias <- 'a';
+
+   writeInteger(5);
+   writeString("hi");
+
+   
 }
-{}

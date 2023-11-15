@@ -74,7 +74,7 @@ public:
 
 
     //Create Array-Integers
-    std::cout<<array_int_size<<std::endl;
+   // std::cout<<array_int_size<<std::endl;
 
     
       llvm::ArrayType *vars_type_array_int = ArrayType::get(i32, array_int_size+5 );
@@ -87,7 +87,7 @@ public:
     int counter=0;
     std::string name="main-array";
     for(const auto& pair: maparrayint){
-    std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+  //  std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
  
     //if(pair.first==name){
     //  std::cout<<counter<<" "<<pair.second<<std::endl;
@@ -113,19 +113,25 @@ public:
 
     // Initialize library functions
     /* writeInteger - lib.a */
-    llvm::FunctionType *writeInteger_type =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), { i32 }, false); //32 or 64?
+    FunctionType *writeInteger_type =
+      FunctionType::get(Type::getVoidTy(TheContext), {i64}, false);
     TheWriteInteger =
-    llvm::Function::Create(writeInteger_type, llvm::Function::ExternalLinkage,
-                    "writeInteger", TheModule.get());
+      Function::Create(writeInteger_type, Function::ExternalLinkage,
+                       "writeInteger", TheModule.get());
 
     /* writeString - lib.a */
-    llvm::FunctionType *writeString_type =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext),
-                        { llvm::PointerType::get(i8, 0) }, false);
+       FunctionType *writeString_type =
+      FunctionType::get(Type::getVoidTy(TheContext),
+                        {PointerType::get(i8, 0)}, false);
     TheWriteString =
-    llvm::Function::Create(writeString_type, llvm::Function::ExternalLinkage,
-                    "writeString", TheModule.get());
+      Function::Create(writeString_type, Function::ExternalLinkage,
+                       "writeString", TheModule.get());
+     /* writeChar - lib.a */
+    llvm::FunctionType *writeChar_type =
+    llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), { i8 }, false);
+    TheWriteChar =
+    llvm::Function::Create(writeChar_type, llvm::Function::ExternalLinkage,
+                    "writeChar", TheModule.get());          
 
     // Define and start the main function.      
     llvm::FunctionType *main_type = llvm::FunctionType::get(i32, {}, false);
@@ -177,6 +183,7 @@ protected:
 
   static Function *TheWriteInteger;
   static Function *TheWriteString;
+  static Function *TheWriteChar;
 
   static Type *i8;
   static Type *i32;

@@ -518,6 +518,7 @@ class Write_Integer : public Stmt {
 public:
     Write_Integer(Id d, int i) : id(d), n(i){}
     void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
     virtual void sem() override;
 private:
     Id id;
@@ -527,18 +528,20 @@ private:
 
 class Write_Char : public Stmt {
 public:
-    Write_Char(Id d) : id(d){}
+    Write_Char(Id d, char ni) : id(d), n(ni){}
     void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
     virtual void sem() override;
 private:
     Id id;
-
+    char n;
 };
 
 class Write_String : public Stmt {
 public:
     Write_String(Id d,char *i,int m) : id(d), x(i), flag(m) {}
     void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
     virtual void sem() override;
 private:
     Id id;

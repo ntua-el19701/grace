@@ -7,6 +7,7 @@ std::stack <llvm::BasicBlock*> pattern;
 stack < bool > has_return;
 stack < bool > after_created;
 
+bool main_called=false;
 
 Value * son;
 
@@ -78,7 +79,7 @@ bool is_integer=true;
 bool array_variable=false;
 bool from_func_call=false;
 bool from_func_decl=false;
-bool check_if_is_array=false;
+
 
 
 int size_array=-1;
@@ -148,7 +149,7 @@ Value * Func_def::compile (){
     return nullptr;
 }
 
-Value * Header::compile() {
+Value * Header::compile() { 
 
    
     args.clear(); /// empty the vector
@@ -162,6 +163,10 @@ Value * Header::compile() {
     pattern.push(activeBB);
     std::string name = nam.getName();
     active_fun=name;
+
+    if(active_fun=="main"){
+        active_fun="main.1";
+    }
 
     if(fpar_def != nullptr) fpar_def->compile();
     if(fpar_def_gen != nullptr) fpar_def_gen->compile();
@@ -193,8 +198,19 @@ Value * Header::compile() {
     llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
                     active_fun, TheModule.get());
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, entry, function);  //define the first BB
+    
+
+    vector< Value*> empty_vec;
+    empty_vec.clear();
+    if(main_called==false){
+        Builder.CreateCall(TheModule->getFunction(active_fun),empty_vec);
+        main_called=true;
+    }
+    
     Builder.SetInsertPoint(BB);
     activeBB=BB;
+
+    
     
     activefunction=function;
 
@@ -370,7 +386,7 @@ Value * Comma_id_gen::compile(){
 }
 
 Value * Type_gen::compile(){
-    std::cout<<"c32("<<size<<")"<<std::endl;
+   // std::cout<<"c32("<<size<<")"<<std::endl;
     if(type_gen != nullptr) type_gen->compile();
     return nullptr;
 }
@@ -394,8 +410,8 @@ Value * Fpar_def::compile(){
         args_counter+=2;
         args_name.push_back(par_name);
         args_name.push_back(par_name+"jr");
-         args_array.push_back(true);
-          args_array.push_back(false);
+        args_array.push_back(true);
+        args_array.push_back(false);
     }
     else{                           ///VARIABLE INTEGER
     array_variable=false;
@@ -477,7 +493,7 @@ Value * L_value::compile(){
 
     std::string name=id.getName();
     std::string var_name = active_fun + "-" + name;
-    std::cout<<var_name<<std::endl; 
+   // std::cout<<var_name<<std::endl; 
     
 
     int c=-1;
@@ -486,7 +502,6 @@ Value * L_value::compile(){
 
         if(var_name==args_name[i]){
             c=i;
-           
         }
     }
 
@@ -494,7 +509,7 @@ Value * L_value::compile(){
     int var_type = vartype[var_name];
     int var_pos = vars[var_name];
 
-    std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
+   // std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
 
     if(c!=-1){   ///variable is argument
 
@@ -505,30 +520,87 @@ Value * L_value::compile(){
 
     
     if(var_type==0){ ///INTEGER
+
+     if(from_expression){    ///ARRAY INTEGER
+            v=activefunction->getArg(c);
+            llvm::ConstantInt* CI = dyn_cast<llvm::ConstantInt>(from_expr);
+            uint64_t value =  CI->getZExtValue(); 
+            llvm::Value* elementPtr = llvm::GetElementPtrInst::CreateInBounds(Type::getInt32Ty(TheContext),v, llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), value), "elementPtr",activeBB);
+            return  elementPtr;
+        }
+        else{
         llvm::PointerType* pointerType = activefunction->getType();
         return Builder.CreateGEP(pointerType, activefunction, c32(c), name);
+        }
     }
     else{
         if(var_type==1){ ///CHAR
+
+        if(from_expression){    ///ARRAY CHAR
+     
+            v=activefunction->getArg(c);
+            llvm::ConstantInt* CI = dyn_cast<llvm::ConstantInt>(from_expr);
+            uint64_t value =  CI->getZExtValue(); 
+            llvm::Value* elementPtr = llvm::GetElementPtrInst::CreateInBounds(Type::getInt32Ty(TheContext),v, llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), value), "elementPtr",activeBB);
+            return  elementPtr;
+        }
+        else{
         llvm::PointerType* pointerType = activefunction->getType();
         return Builder.CreateGEP(pointerType, activefunction, c32(c), name);
+        }
     }
 
     }
 
     }
     else{
+        Value * v;
     if(var_type==0){ ///INTEGER
+
+        
+        if(from_expression){    ///ARRAY INTEGER
+
+             pair < int , int > possible_array;
+            possible_array=find_array(active_fun+"-"+name,true);
+           
+
+            llvm::PointerType* pointerType = TheVarsIntArray->getType();
+             v = Builder.CreateGEP(pointerType, TheVarsIntArray, c32(possible_array.first), name);
+
+            llvm::ConstantInt* CI = dyn_cast<llvm::ConstantInt>(from_expr);
+            uint64_t value =  CI->getZExtValue(); 
+            llvm::Value* elementPtr = llvm::GetElementPtrInst::CreateInBounds(Type::getInt32Ty(TheContext),v, llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), value), "elementPtr",activeBB);
+            return  elementPtr;
+        }
+        else{
+
         llvm::PointerType* pointerType = TheVarsInt->getType();
         return Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
+        }
        
     }
     else
     if(var_type==1){ ///CHAR
       
+         if(from_expression){    ///ARRAY CHAR
+
+             pair < int , int > possible_array;
+            possible_array=find_array(active_fun+"-"+name,false);
+           
+
+            llvm::PointerType* pointerType = TheVarsCharArray->getType();
+             v = Builder.CreateGEP(pointerType, TheVarsCharArray, c32(possible_array.first), name);
+
+            llvm::ConstantInt* CI = dyn_cast<llvm::ConstantInt>(from_expr);
+            uint64_t value =  CI->getZExtValue(); 
+            llvm::Value* elementPtr = llvm::GetElementPtrInst::CreateInBounds(Type::getInt32Ty(TheContext),v, llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), value), "elementPtr",activeBB);
+            return  elementPtr;
+        }
+        else{
+       // std::cout<<"character"; HERE IS BROKEN
         llvm::PointerType* pointerType = TheVarsChar->getType();
         return  Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), name);
-
+        }
     }
     return nullptr;
     }
@@ -548,8 +620,11 @@ Value * L_value::compile(){
        
 
         from_expr = expr->compile();
+      //  std::cout<<"===================";
+        from_expr->print(llvm::outs());
         from_expression=true;
-        l_value->compile();
+        return l_value->compile();
+        from_expression=false;
     
 
         
@@ -583,13 +658,13 @@ Value * Func_call_stmt::compile(){
 
     if(expr!=nullptr) {
         
-        if(func_ref[header_name][position]==false){
+        if(func_ref[header_name][position]==false){ ///PARAMETER NOT REFERENCE
         v = expr->compile();
          params.push_back(v);
         }
         
-        else{
-            size_array=-1;
+        else{                               ///PARAMETER REFERENCE
+            size_array=-1;                  /// IF SIZE ARRAY!=-1 => WE HAVE ARRAY
             from_func_call=true;
               v = expr->compile();
               params.push_back(v);
@@ -608,7 +683,6 @@ Value * Func_call_stmt::compile(){
     }
     if(comma_expr_gen != nullptr) comma_expr_gen->compile();
 
-    check_if_is_array=false;
     return Builder.CreateCall(TheModule->getFunction(id.getName()),params);
    
 }
@@ -844,45 +918,35 @@ Value * IntConst::compile(){
 Value * Id::compile(){
     
     std::string var_name = active_fun + "-" + name;
-    std::cout<<var_name<<std::endl; 
 
-    if(from_func_call){
-
-        bool array_exists=false;
-        
+    if(from_func_call){ ///We expect to pass reference  
+     
         int c=-1;
 
+        ///Check if the id we look is a parameter of the function , if c!=-1 ->parameter
         for(auto i=0;i<args_counter;i++){
-        
             if(var_name==args_name[i]){
-                
-               
-                if(args_array[i]){
+                           
+                if(args_array[i]){  ///If Array -> Return the size = Son
 
-
-                    
-                    son= activefunction->getArg(i+1);
+                    son= activefunction->getArg(i+1);   
                     size_array=1;
-                    
-                    
                 }
                 c=i;
-           
             }
         }
 
-        int var_type = vartype[var_name];
+        int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
+        int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
 
-        int var_pos = vars[var_name];
-
-        if(c!=-1){    ///variable is argument
+        if(c!=-1){    ///variable is a Parameter
 
             
-        bool ref = args_ref[c];  ///karterw deikti  // exw ref = true ara deikti alliws value
+        bool ref = args_ref[c];  ///Function thelei Deikti san parametro True/Fale
         llvm::Value* v ; 
-    if(var_type==0){ ///INTEGER
+        
+        if(var_type==0){ ///INTEGER
        
-
         if(ref){
               return activefunction->getArg(c);
         }
@@ -915,9 +979,9 @@ Value * Id::compile(){
 
    }
 
-   else{                ///variable is not argument
+   else{                ///variable is not Parameter
     llvm::Value* v;
-    std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
+    
     if(var_type==0){ ///INTEGER
 
         pair < int , int > possible_array;
@@ -939,10 +1003,9 @@ Value * Id::compile(){
     }
     else
     if(var_type==1){ ///CHAR
-      std::cout<<"name is "<<name<<std::endl;
+      //std::cout<<"name is "<<name<<std::endl;
         pair < int , int > possible_array;
         possible_array=find_array(active_fun+"-"+name,false);
-        std::cout<<possible_array.first<<" "<<possible_array.second<<std::endl;
 
         if(possible_array.first!=-1){   ///ARRAY
 
@@ -966,21 +1029,19 @@ Value * Id::compile(){
 
     }   //////TELOS FUNC CALL
 
-    else{   /// EPISTREFW TIMI
+    else{   /// We expect to return Value
 
     int c=-1;
 
+         ///Check if the id we look is a parameter of the function , if c!=-1 ->parameter
     for(auto i=0;i<args_counter;i++){
-
         if(var_name==args_name[i]){
             c=i;
-           
         }
     }
 
   
     int var_type = vartype[var_name];
-
     int var_pos = vars[var_name];
 
    
@@ -995,8 +1056,10 @@ Value * Id::compile(){
        
         if(from_expression){    ///ARRAY INTEGER
             v=activefunction->getArg(c);
-            std::cout<<"herreeee"; ///HEREEE IS BROKENNN
-            return  Builder.CreateLoad(Type::getInt32Ty(TheContext), v  , name);
+            llvm::ConstantInt* CI = dyn_cast<llvm::ConstantInt>(from_expr);
+            uint64_t value =  CI->getZExtValue(); 
+            llvm::Value* elementPtr = llvm::GetElementPtrInst::CreateInBounds(Type::getInt32Ty(TheContext),v, llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), value), "elementPtr",activeBB);
+            return  Builder.CreateLoad(Type::getInt32Ty(TheContext), elementPtr , name);
         }
         else{
 
@@ -1013,6 +1076,15 @@ Value * Id::compile(){
     else
     if(var_type==1){ ///CHAR
 
+        if(from_expression){    ///ARRAY INTEGER
+            v=activefunction->getArg(c);
+            llvm::ConstantInt* CI = dyn_cast<llvm::ConstantInt>(from_expr);
+            uint64_t value =  CI->getZExtValue(); 
+            llvm::Value* elementPtr = llvm::GetElementPtrInst::CreateInBounds(Type::getInt32Ty(TheContext),v, llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), value), "elementPtr",activeBB);
+            return  Builder.CreateLoad(Type::getInt8Ty(TheContext), elementPtr , name);
+        }
+        else{
+
         if(ref){
             v=activefunction->getArg(c);
             return  Builder.CreateLoad(Type::getInt8Ty(TheContext), v, name);
@@ -1020,7 +1092,7 @@ Value * Id::compile(){
         else
        
        return activefunction->getArg(c);
-   
+        }
     }
     else
     return nullptr;
@@ -1030,18 +1102,52 @@ Value * Id::compile(){
    
     else{  ///variable is not argument
     llvm::Value* v;
-    std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
+    //std::cout<<name<<" Var type: "<<var_type<<" Var pos: "<<var_pos<<std::endl;
     if(var_type==0){ ///INTEGER
+
+
+        if(from_expression){    ///ARRAY INTEGER
+
+             pair < int , int > possible_array;
+            possible_array=find_array(active_fun+"-"+name,true);
+           
+
+            llvm::PointerType* pointerType = TheVarsIntArray->getType();
+             v = Builder.CreateGEP(pointerType, TheVarsIntArray, c32(possible_array.first), name);
+
+            llvm::ConstantInt* CI = dyn_cast<llvm::ConstantInt>(from_expr);
+            uint64_t value =  CI->getZExtValue(); 
+            llvm::Value* elementPtr = llvm::GetElementPtrInst::CreateInBounds(Type::getInt32Ty(TheContext),v, llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), value), "elementPtr",activeBB);
+            return  Builder.CreateLoad(Type::getInt32Ty(TheContext), elementPtr , name);
+        }
+        else{
         llvm::PointerType* pointerType = TheVarsInt->getType();
         v = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
         return Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
+        }
     }
     else
     if(var_type==1){ ///CHAR
       
+         if(from_expression){    ///ARRAY CHAR
+
+             pair < int , int > possible_array;
+            possible_array=find_array(active_fun+"-"+name,false);
+           
+
+            llvm::PointerType* pointerType = TheVarsCharArray->getType();
+             v = Builder.CreateGEP(pointerType, TheVarsCharArray, c32(possible_array.first), name);
+
+            llvm::ConstantInt* CI = dyn_cast<llvm::ConstantInt>(from_expr);
+            uint64_t value =  CI->getZExtValue(); 
+            llvm::Value* elementPtr = llvm::GetElementPtrInst::CreateInBounds(Type::getInt32Ty(TheContext),v, llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), value), "elementPtr",activeBB);
+            return  Builder.CreateLoad(Type::getInt8Ty(TheContext), elementPtr , name);
+        }
+        else{
         llvm::PointerType* pointerType = TheVarsChar->getType();
         v = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), name);
         return Builder.CreateLoad(Type::getInt8Ty(TheContext), v, name);
+        }
 
     }
   
@@ -1062,3 +1168,67 @@ Value * Const_char::compile() {
     return c8(str[1]);
 }
 
+//PRINTSSSS
+
+Value * Write_Integer::compile(){
+
+    if(n==-1){
+        
+        
+        Value *val = id.compile();
+
+        //Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
+        Value *n64 = Builder.CreateSExt(val, i64, "ext");
+        Builder.CreateCall(TheWriteInteger, {n64});
+    }
+    else{
+
+    Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
+    Value *n64 = Builder.CreateSExt(val, i64, "ext");
+    Builder.CreateCall(TheWriteInteger, {n64});
+
+    }
+
+    llvm::PointerType* pointerType = activefunction->getType();
+    Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
+    Builder.CreateCall(TheWriteString, {nl});
+     return nullptr;
+}
+
+Value * Write_String::compile(){
+    Value * v = Builder.CreateGlobalString(StringRef(x),"varName");
+
+    Builder.CreateCall(TheWriteString, {v});
+
+    llvm::PointerType* pointerType = activefunction->getType();
+    Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
+    Builder.CreateCall(TheWriteString, {nl});
+    return nullptr;
+}
+
+Value * Write_Char::compile(){
+
+    if(n=='`'){
+        
+        
+        Value *val = id.compile();
+        //Value * v = Builder.CreateGlobalString(StringRef(val),"varName");
+        val->print(llvm::outs());
+        //Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
+       
+        //Builder.CreateCall(TheWriteChar, {val});
+    }
+    else{
+
+    /*Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
+    Value *n64 = Builder.CreateSExt(val, i64, "ext");*/
+    //Value * v = Builder.CreateGlobalString(StringRef(n),"varName");
+   // Builder.CreateCall(TheWriteChar, {n});
+
+    }
+
+    llvm::PointerType* pointerType = activefunction->getType();
+    Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
+    Builder.CreateCall(TheWriteString, {nl});
+     return nullptr;
+}
