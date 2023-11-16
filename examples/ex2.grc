@@ -1,0 +1,11 @@
+fun main() : nothing 
+fun solve () :nothing
+var c : char;
+var x : int;
+ {
+   c <- chr(45);
+    writeChar(c);
+
+}
+{solve();
+}

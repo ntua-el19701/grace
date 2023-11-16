@@ -291,7 +291,12 @@ void Cond::printAST(std::ostream &out) const  {
         WRITE_CHAR
 */
  void Write_Char::printAST(std::ostream &out) const  {
-        out << "Write_Char(" << id;
+       out << "Write_Char(";
+       if(flag==0){
+        out << id; }
+        else
+        out<<str[1];
+
         out<< ")";
          
   }
@@ -306,4 +311,18 @@ void Cond::printAST(std::ostream &out) const  {
         
        out << ")";
   }
+  void ReadInteger::printAST(std::ostream &out) const {
+         out << "ReadInteger()" ;
+  }
   
+  void ReadChar::printAST(std::ostream &out) const {
+         out << "ReadChar()" ;
+  }
+
+  void Ascii::printAST(std::ostream &out) const {
+        out<<"Ascii(" << character << ")"; 
+  }
+
+  void Chr::printAST(std::ostream &out) const {
+        out<<"Chr(" << num << ")"; 
+  }

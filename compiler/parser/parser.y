@@ -77,7 +77,10 @@ FunctionTable ft;
 %token T_writeInteger "writeInteger"
 %token T_writeChar    "writeChar"
 %token T_writeString  "writeString"
-
+%token T_readInteger  "readInteger"
+%token T_readChar  "readChar"
+%token T_ascii "ascii"
+%token T_chr "chr"
 
 
 %token<id>  T_id             
@@ -136,7 +139,7 @@ program:
         func_def 
         { $$ = $1;
        // std::cout << "AST: " << *$1<<std::endl; 
-        $1->sem(); 
+        //$1->sem(); 
         //std::cout<<"SEM COMPLETED"<<std::endl;
         $1->preCompile();
         //std::cout<<"preCompile COMPLETED"<<std::endl;
@@ -225,8 +228,8 @@ stmt:
         | T_return expr ';'                                         { $$ = new Return($2); }
         | T_writeInteger '(' T_id ')' ';'                           { $$ = new Write_Integer($3, -1); }
         | T_writeInteger '(' T_const_int ')' ';'                    { $$ = new Write_Integer(nullptr, $3); }
-       // | T_writeChar '(' T_id ')' ';'                              { $$ = new Write_Char($3, "`"); }
-       // | T_writeChar '(' T_const_char ')' ';'                      { $$ = new Write_Char(nullptr,$3); }
+        | T_writeChar '(' T_id ')' ';'                              { $$ = new Write_Char($3, nullptr,0); }
+        | T_writeChar '(' T_const_char ')' ';'                      { $$ = new Write_Char(nullptr,$3,1); }
         | T_writeString '(' T_id ')' ';'                            { $$ = new Write_String($3,nullptr,0); }
         | T_writeString '(' T_const_string ')' ';'                  { $$ = new Write_String(nullptr,$3,1); }
 
@@ -273,6 +276,11 @@ expr:
         | expr '*' expr                                             { $$ = new BinOp($1,"*",$3); }
         | expr T_div expr                                           { $$ = new BinOp($1,"/",$3); }
         | expr T_mod expr                                           { $$ = new BinOp($1,"%",$3); }
+        | T_readInteger '(' ')'                                     { $$ = new ReadInteger(); }
+        | T_readChar '(' ')'                                        { $$ = new ReadChar(); }
+        | T_ascii '(' T_const_char ')'                              { $$ = new Ascii($3,nullptr,0); }
+        | T_ascii '(' T_id ')'                                      { $$ = new Ascii(nullptr,$3,1); }
+        | T_chr '(' T_const_int ')'                                 { $$ = new Chr($3); }
         ;
 
 expr_high: 

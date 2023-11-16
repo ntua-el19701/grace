@@ -1,11 +1,16 @@
 fun main() : nothing
-
-var ilias : char;
+var e : int;
+fun vic(x : int) : int
+var pi:int;
 {
-   ilias <- 'a';
+   pi<-x+2;
+   writeInteger(x);
+   $x<-2;
+   $writeInteger(x);
+   return x;
+}
 
-   writeInteger(5);
-   writeString("hi");
-
-   
+{
+   e <- vic(3);
+   writeInteger(e);
 }

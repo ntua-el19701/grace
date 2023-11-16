@@ -10,6 +10,8 @@ stack < bool > after_created;
 bool main_called=false;
 
 Value * son;
+int update_param;
+bool need_update=false;
 
 Value * from_expr;
 bool from_expression=false;
@@ -20,6 +22,30 @@ llvm::Function *activefunction;
 
 Typos keepheadertype;
 
+llvm::Value* getPointerToFunctionParameter(llvm::Function* activeFunction, unsigned c, llvm::IRBuilder<>& builder) {
+    // Ensure c is a valid index
+    if (c >= activeFunction->arg_size()) {
+        // Handle error: invalid parameter index
+        return nullptr;
+    }
+
+    // Get the c-th parameter of the function
+    auto paramIterator = activeFunction->arg_begin();
+    std::advance(paramIterator, c);
+    llvm::Argument* param = &(*paramIterator);
+
+    // Create a pointer to the parameter type
+    llvm::PointerType* paramPointerType = param->getType()->getPointerTo();
+
+    // Create an AllocaInst to allocate memory
+    llvm::Value* paramPointer = builder.CreateAlloca(paramPointerType, nullptr, "paramPointer");
+
+    // Store the parameter value into the allocated memory
+    builder.CreateStore(param, paramPointer);
+
+    // Return the pointer to the allocated memory
+    return paramPointer;
+}
 
 std::vector < llvm :: Type * > args; /// parameters to insert (reference + kanoniko)
 std::vector < std::string > args_name; ///name of parameters in the function
@@ -205,6 +231,8 @@ Value * Header::compile() {
     if(main_called==false){
         Builder.CreateCall(TheModule->getFunction(active_fun),empty_vec);
         main_called=true;
+        if(active_fun=="main.1")
+        active_fun="main";
     }
     
     Builder.SetInsertPoint(BB);
@@ -487,11 +515,13 @@ Value * Fpar_type::compile(){
 Value * L_value::compile(){
     
     if(flag == 1){ /// id
-        
+    
         //id.compile();
     if(is_assign){
 
     std::string name=id.getName();
+
+ 
     std::string var_name = active_fun + "-" + name;
    // std::cout<<var_name<<std::endl; 
     
@@ -513,6 +543,7 @@ Value * L_value::compile(){
 
     if(c!=-1){   ///variable is argument
 
+       
 
        bool ref = args_ref[c];
             
@@ -529,9 +560,15 @@ Value * L_value::compile(){
             return  elementPtr;
         }
         else{
-        llvm::PointerType* pointerType = activefunction->getType();
-        return Builder.CreateGEP(pointerType, activefunction, c32(c), name);
-        }
+            Function::arg_iterator args = activefunction->arg_begin();
+            Value *arg1 = &(*args++);
+            std::vector<Value *> indices;
+            indices.push_back(Builder.getInt32(0));     ///////////BROKENNNNNNNN
+           
+            return  Builder.CreateGEP(activefunction->getType(),arg1, indices, "gep_result");
+
+          
+            }
     }
     else{
         if(var_type==1){ ///CHAR
@@ -545,6 +582,7 @@ Value * L_value::compile(){
             return  elementPtr;
         }
         else{
+        
         llvm::PointerType* pointerType = activefunction->getType();
         return Builder.CreateGEP(pointerType, activefunction, c32(c), name);
         }
@@ -573,7 +611,7 @@ Value * L_value::compile(){
             return  elementPtr;
         }
         else{
-
+            
         llvm::PointerType* pointerType = TheVarsInt->getType();
         return Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
         }
@@ -597,7 +635,7 @@ Value * L_value::compile(){
             return  elementPtr;
         }
         else{
-       // std::cout<<"character"; HERE IS BROKEN
+    
         llvm::PointerType* pointerType = TheVarsChar->getType();
         return  Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), name);
         }
@@ -641,6 +679,14 @@ Value * Assign::compile(){
    Value *rhs = expr->compile();
 
    Builder.CreateStore(rhs, lhs); 
+
+   if(need_update){
+    
+   
+
+
+    need_update=false;
+   }
 
     return nullptr;
 }
@@ -1176,6 +1222,7 @@ Value * Write_Integer::compile(){
         
         
         Value *val = id.compile();
+      
 
         //Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
         Value *n64 = Builder.CreateSExt(val, i64, "ext");
@@ -1196,9 +1243,22 @@ Value * Write_Integer::compile(){
 }
 
 Value * Write_String::compile(){
-    Value * v = Builder.CreateGlobalString(StringRef(x),"varName");
+
+    ///Print a text
+    std::string new_str="";
+    std::string str="";
+    str+=x;
+
+    for(int i=1;i<str.size()-1;i++){
+        new_str+=str[i];
+    }
+
+    Value * v = Builder.CreateGlobalString(StringRef(new_str),"varName");
 
     Builder.CreateCall(TheWriteString, {v});
+
+    ///Print ARRAY CHAR
+    // ----------------------------TO DO
 
     llvm::PointerType* pointerType = activefunction->getType();
     Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
@@ -1208,22 +1268,25 @@ Value * Write_String::compile(){
 
 Value * Write_Char::compile(){
 
-    if(n=='`'){
+    ///---------------------------TO DO
+
+    if(flag==0){
         
         
         Value *val = id.compile();
-        //Value * v = Builder.CreateGlobalString(StringRef(val),"varName");
-        val->print(llvm::outs());
-        //Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
+       Builder.CreateCall(TheWriteChar, {val});
+    
+
        
-        //Builder.CreateCall(TheWriteChar, {val});
     }
     else{
 
-    /*Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
-    Value *n64 = Builder.CreateSExt(val, i64, "ext");*/
-    //Value * v = Builder.CreateGlobalString(StringRef(n),"varName");
-   // Builder.CreateCall(TheWriteChar, {n});
+   
+   std::string new_str = "";
+    new_str+=str[1];
+   
+     Value * v = Builder.CreateGlobalString(StringRef(new_str),"varName");
+     Builder.CreateCall(TheWriteString, {v});
 
     }
 
@@ -1231,4 +1294,35 @@ Value * Write_Char::compile(){
     Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
     Builder.CreateCall(TheWriteString, {nl});
      return nullptr;
+}
+
+Value * ReadInteger::compile(){
+    return Builder.CreateCall(TheReadInteger,{});
+}
+
+Value * ReadChar::compile(){
+    return Builder.CreateCall(TheReadChar,{});
+}
+
+Value * Ascii::compile() {
+    if(flag == 0){
+        char c = character[1];
+        Value *charValue = Builder.getInt8(c);
+    // return charValue;
+        return Builder.CreateCall(TheAscii, {charValue});
+    }
+    else{
+        
+        Value * v = id.compile();
+        
+        return Builder.CreateCall(TheAscii, {v});
+    }
+
+}
+
+Value* Chr::compile() {
+    
+    Value *val = llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), num);
+    Value *n64 = Builder.CreateSExt(val, i64, "ext");
+    return Builder.CreateCall(TheChr, {n64});
 }

@@ -120,7 +120,7 @@ public:
                        "writeInteger", TheModule.get());
 
     /* writeString - lib.a */
-       FunctionType *writeString_type =
+    FunctionType *writeString_type =
       FunctionType::get(Type::getVoidTy(TheContext),
                         {PointerType::get(i8, 0)}, false);
     TheWriteString =
@@ -131,7 +131,31 @@ public:
     llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), { i8 }, false);
     TheWriteChar =
     llvm::Function::Create(writeChar_type, llvm::Function::ExternalLinkage,
-                    "writeChar", TheModule.get());          
+                    "writeChar", TheModule.get());  
+    /* readInteger - lib.a */
+    llvm::FunctionType *readInteger_type =
+        llvm::FunctionType::get(i32, false);
+        TheReadInteger =
+        llvm::Function::Create(readInteger_type, llvm::Function::ExternalLinkage,
+                       "readInteger", TheModule.get()); 
+     /* readChar - lib.a */
+    llvm::FunctionType *readCharacter_type =
+        llvm::FunctionType::get(i8, false);
+        TheReadChar =
+        llvm::Function::Create(readCharacter_type, llvm::Function::ExternalLinkage,
+                       "readChar", TheModule.get());       
+    /*  ascii - lib.a  */
+    llvm::FunctionType *ascii_type = 
+    llvm::FunctionType::get(i32, { i8 }, false);
+    TheAscii =
+        llvm::Function::Create(ascii_type, llvm::Function::ExternalLinkage,
+                       "ascii", TheModule.get());
+    /* chr - lib.a */
+    llvm::FunctionType *chr_type = 
+        llvm::FunctionType::get(i8, { i64 }, false);
+        TheChr =
+        llvm::Function::Create(chr_type, llvm::Function::ExternalLinkage,
+                       "chr", TheModule.get());
 
     // Define and start the main function.      
     llvm::FunctionType *main_type = llvm::FunctionType::get(i32, {}, false);
@@ -184,6 +208,10 @@ protected:
   static Function *TheWriteInteger;
   static Function *TheWriteString;
   static Function *TheWriteChar;
+  static Function *TheReadInteger;
+  static Function *TheReadChar;
+  static Function *TheAscii;
+   static Function *TheChr;
 
   static Type *i8;
   static Type *i32;

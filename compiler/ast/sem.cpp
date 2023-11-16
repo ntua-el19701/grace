@@ -3,7 +3,7 @@
 #include "ast.hpp"
 #include <vector>
 #include <stack>
-
+/// ERRORS TO DO :  READINTEGER, REF
 Typos prevType; // used for comma id gen
 vector<int> functions; //vector that contains each return value of every function
 bool returned = false; //flag to check if function returns correctly

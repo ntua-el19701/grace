@@ -48,8 +48,10 @@ PR ({L}|{D}|[ ~!:@.#$%^&*\(\)_+\[\]\|\{\}])
 "writeInteger"  { return T_writeInteger; }
 "writeChar"     { return T_writeChar; }
 "writeString"   { return T_writeString; }
-
-
+"readInteger"   { return T_readInteger; }
+"readChar"      { return T_readChar; }
+"ascii"         { return T_ascii; }
+"chr"           { return T_chr; }
 
 \'({PR}|{ES})\'   { yylval.const_char = yytext; return T_const_char; } //for constant characters ('a')
 [\=\+\-\*\#\(\)\{\}\[\]\,\;\:\>\<]            { yylval.op = yytext[0]; return yytext[0]; }  

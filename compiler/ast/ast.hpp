@@ -528,13 +528,14 @@ private:
 
 class Write_Char : public Stmt {
 public:
-    Write_Char(Id d, char ni) : id(d), n(ni){}
+    Write_Char(Id d, char* ni,int f) : id(d), str(ni),flag(f){}
     void printAST(std::ostream &out) const override;
     virtual Value * compile() override;
     virtual void sem() override;
 private:
     Id id;
-    char n;
+    char* str;
+    int flag;
 };
 
 class Write_String : public Stmt {
@@ -549,4 +550,54 @@ private:
     int flag;
     
 };
+
+class ReadInteger : public Expr {
+ public:
+    ReadInteger() {}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+    virtual char* getName() override {
+    return nullptr;
+  }
+
+};
+
+class ReadChar : public Expr {
+ public:
+    ReadChar() {}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+    virtual char* getName() override {
+    return nullptr;
+  }
+
+};
+
+class Ascii : public Expr {
+public:
+    Ascii(char* c,Id i, bool f) : character(c), id(i), flag(f) {}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+    virtual char* getName() override {
+    return nullptr;
+  }
+private:
+    char* character;
+    Id id;
+    bool flag;
+};
+
+class Chr : public Expr {
+public : 
+    Chr(int n) : num(n) {}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+    virtual char* getName() override {
+    return nullptr;
+  }
+
+private:
+    int num;
+};
+
 #endif
