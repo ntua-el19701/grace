@@ -1,11 +1,25 @@
 fun main() : nothing 
-fun solve () :nothing
-var c : char;
-var x : int;
- {
-   c <- chr(45);
-    writeChar(c);
 
-}
-{solve();
+var z:int;
+
+fun solve (ref p:int) :nothing
+var c,d : char;
+var x,a : int;
+ {
+    x <- 0;
+
+    a <- p+x;
+
+
+    solve(a)
+
+ }
+{
+
+    z<-3;
+
+    z<-z+5;
+    writeInteger(z);
+
+    $solve();
 }

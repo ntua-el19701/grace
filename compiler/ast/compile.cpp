@@ -20,32 +20,7 @@ string active_fun="emptyfun";
 
 llvm::Function *activefunction;
 
-Typos keepheadertype;
-
-llvm::Value* getPointerToFunctionParameter(llvm::Function* activeFunction, unsigned c, llvm::IRBuilder<>& builder) {
-    // Ensure c is a valid index
-    if (c >= activeFunction->arg_size()) {
-        // Handle error: invalid parameter index
-        return nullptr;
-    }
-
-    // Get the c-th parameter of the function
-    auto paramIterator = activeFunction->arg_begin();
-    std::advance(paramIterator, c);
-    llvm::Argument* param = &(*paramIterator);
-
-    // Create a pointer to the parameter type
-    llvm::PointerType* paramPointerType = param->getType()->getPointerTo();
-
-    // Create an AllocaInst to allocate memory
-    llvm::Value* paramPointer = builder.CreateAlloca(paramPointerType, nullptr, "paramPointer");
-
-    // Store the parameter value into the allocated memory
-    builder.CreateStore(param, paramPointer);
-
-    // Return the pointer to the allocated memory
-    return paramPointer;
-}
+Typos keepheadertype;     
 
 std::vector < llvm :: Type * > args; /// parameters to insert (reference + kanoniko)
 std::vector < std::string > args_name; ///name of parameters in the function
@@ -53,6 +28,11 @@ std::vector < bool > args_array; ///name of parameters in the function
 std::vector < llvm:: Value * > params; /// parameters to call a function
 
 std::map < std::string , std::vector < bool > > func_ref;
+
+std::map < std::string , llvm::Function *> declared_function; 
+
+std::map < std::string , stack < llvm:: Value * > > keep_variables_values;
+
 
 
 std::vector <bool> args_ref; // true: argument is reference , false: argument not reference
@@ -220,12 +200,22 @@ Value * Header::compile() {
 
     std::string entry = active_fun+"-entry";
   
-    llvm::Function *function =
+     llvm::BasicBlock *BB;
+      llvm::Function *function;
+    if(declared_function[active_fun]!=0){
+        
+        function= declared_function[active_fun];
+        BB = llvm::BasicBlock::Create(TheContext, entry, function);  //define the first BB
+
+    }
+    else{
+   function =
     llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
                     active_fun, TheModule.get());
-    llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, entry, function);  //define the first BB
-    
+    BB = llvm::BasicBlock::Create(TheContext, entry, function);  //define the first BB
+    }
 
+    ///CALL THE FIRST FUNCTION
     vector< Value*> empty_vec;
     empty_vec.clear();
     if(main_called==false){
@@ -238,17 +228,59 @@ Value * Header::compile() {
     Builder.SetInsertPoint(BB);
     activeBB=BB;
 
-    
-    
     activefunction=function;
 
     func_ref[name]=args_ref;
 
 
+    for(auto i=0;i<args_name.size();i++){
+        
+
+        Value * rhs = activefunction->getArg(i);
+        std::string var_name= args_name[i];
+       
+        int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
+        int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
+
+
+        if(var_type==0){ ///INTEGER
+
+       if(1<0){ ///Array case
+       
+       }
+
+        else{ ///NOT ARRAY
+            llvm::PointerType* pointerType = TheVarsInt->getType();
+            Value * lhs = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
+            Builder.CreateStore(rhs, lhs); 
+         }
+
+
+        }
+        if(var_type==1){ ///Char
+
+       if(1<0){ ///Array case
+       
+       }
+
+        else{ ///NOT ARRAY
+            llvm::PointerType* pointerType = TheVarsChar->getType();
+            Value * lhs = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), name);
+            Builder.CreateStore(rhs, lhs); 
+         }
+
+
+        }
+
+    }
+
     }
     else{
-         std::string name = nam.getName();
-    active_fun=name;
+    std::string name = nam.getName();
+    active_fun=name;        //Name of active function
+
+
+
 
     if(fpar_def != nullptr) fpar_def->compile();
     if(fpar_def_gen != nullptr) fpar_def_gen->compile();
@@ -279,6 +311,8 @@ Value * Header::compile() {
     llvm::Function *function =
     llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
                     active_fun, TheModule.get());
+   
+    declared_function[active_fun]=function;
 
      func_ref[name]=args_ref;
 
@@ -454,7 +488,7 @@ Value * Fpar_def::compile(){
     }
         args_counter++;
         args_name.push_back(par_name);
-         args_array.push_back(false);
+        args_array.push_back(false);
   
     }
     
@@ -516,7 +550,41 @@ Value * L_value::compile(){
     
     if(flag == 1){ /// id
     
-        //id.compile();
+    if(is_assign){
+
+        std::string name=id.getName();
+        std::string var_name = active_fun + "-" + name;
+
+         int var_type = vartype[var_name];
+         int var_pos = vars[var_name];
+
+         if(var_type==0){ ///INTEGER
+
+            llvm::PointerType* pointerType = TheVarsInt->getType();
+            return Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
+
+         }
+
+         else{
+
+        if(var_type==1){ ///CHAR
+
+            llvm::PointerType* pointerType = TheVarsChar->getType();
+            return Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), name);
+
+         }
+
+         }
+
+    }
+
+    else{
+        
+    return id.compile();
+    }
+
+
+     /*
     if(is_assign){
 
     std::string name=id.getName();
@@ -545,7 +613,7 @@ Value * L_value::compile(){
 
        
 
-       bool ref = args_ref[c];
+       ///  unused bool ref = args_ref[c];
             
         llvm::Value* v;
 
@@ -560,14 +628,18 @@ Value * L_value::compile(){
             return  elementPtr;
         }
         else{
-            Function::arg_iterator args = activefunction->arg_begin();
-            Value *arg1 = &(*args++);
-            std::vector<Value *> indices;
-            indices.push_back(Builder.getInt32(0));     ///////////BROKENNNNNNNN
            
-            return  Builder.CreateGEP(activefunction->getType(),arg1, indices, "gep_result");
+            if(args_ref[c]==true){
+            Value * v = activefunction->getArg(c);
+            return  v;//Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
+            }
+            else{   ///////HERE IS NOT THAT BROKEN BUT STILL BROKEN
+            
+             llvm::PointerType* pointerType = TheVarsInt->getType();
+            return Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
+            }
+         
 
-          
             }
     }
     else{
@@ -649,6 +721,8 @@ Value * L_value::compile(){
         
     return id.compile();
     }
+    */
+    
         
     } // kati me id
         
@@ -659,7 +733,7 @@ Value * L_value::compile(){
 
         from_expr = expr->compile();
       //  std::cout<<"===================";
-        from_expr->print(llvm::outs());
+        //from_expr->print(llvm::outs());
         from_expression=true;
         return l_value->compile();
         from_expression=false;
@@ -679,14 +753,6 @@ Value * Assign::compile(){
    Value *rhs = expr->compile();
 
    Builder.CreateStore(rhs, lhs); 
-
-   if(need_update){
-    
-   
-
-
-    need_update=false;
-   }
 
     return nullptr;
 }
@@ -729,8 +795,76 @@ Value * Func_call_stmt::compile(){
     }
     if(comma_expr_gen != nullptr) comma_expr_gen->compile();
 
-    return Builder.CreateCall(TheModule->getFunction(id.getName()),params);
+
+    /// NEED TO STORE THE VARIABLES OF THE FUNCTION I CALL
+    std::string function_name = id.getName();
+
+    for(const auto& pair: variable_function){
+    
+        if(pair.second==function_name){
+            std::string var_name=pair.first;
+
+            int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
+            int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
+
+        Value * v;
+        Value * val;
+
+            if(var_type==0){ ///INTEGER
+
+                 llvm::PointerType* pointerType = TheVarsInt->getType();
+                  v = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), var_name);
+                 val =  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, var_name);
+              }
+      if(var_type==1){ ///CHAR
+
+        llvm::PointerType* pointerType = TheVarsChar->getType();
+          v = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), var_name);
+          val =  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, var_name);
+    }
+
+            keep_variables_values[var_name].push(val);
+
+        }
+   }
+
+    Value * result = Builder.CreateCall(TheModule->getFunction(id.getName()),params);
    
+    ///NEED TO POP AND REPLACE IN TheVarsInt - TheVarsChar
+      for(const auto& pair: variable_function){
+    
+        if(pair.second==function_name){
+            std::string var_name=pair.first;
+
+            int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
+            int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
+
+            Value * old_val = keep_variables_values[var_name].top();
+            keep_variables_values[var_name].pop();
+
+          
+
+            if(var_type==0){ ///INTEGER
+
+                 llvm::PointerType* pointerType = TheVarsInt->getType();
+                  v = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), var_name);
+                  Builder.CreateStore(old_val, v); 
+              }
+            if(var_type==1){ ///CHAR
+
+                llvm::PointerType* pointerType = TheVarsChar->getType();
+                v = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), var_name);
+                 Builder.CreateStore(old_val, v); 
+                
+            }
+
+            
+
+        }
+   }
+
+
+    return result;
 }
 
 Value * Comma_expr_gen::compile(){
@@ -876,24 +1010,24 @@ Value * Return::compile(){
 }
 
 Value * Func_call_expr::compile(){
-    
-  
-    Value *v;
+      Value *v;
     
     params.clear();
 
     header_name = id.getName();
     position=0;
 
+    from_expression=false;
+
     if(expr!=nullptr) {
         
-        if(func_ref[header_name][position]==false){
+        if(func_ref[header_name][position]==false){ ///PARAMETER NOT REFERENCE
         v = expr->compile();
          params.push_back(v);
         }
         
-        else{
-            size_array=-1;
+        else{                               ///PARAMETER REFERENCE
+            size_array=-1;                  /// IF SIZE ARRAY!=-1 => WE HAVE ARRAY
             from_func_call=true;
               v = expr->compile();
               params.push_back(v);
@@ -911,7 +1045,77 @@ Value * Func_call_expr::compile(){
     
     }
     if(comma_expr_gen != nullptr) comma_expr_gen->compile();
-    return Builder.CreateCall(TheModule->getFunction(id.getName()),params);
+
+
+    /// NEED TO STORE THE VARIABLES OF THE FUNCTION I CALL
+    std::string function_name = id.getName();
+
+    for(const auto& pair: variable_function){
+    
+        if(pair.second==function_name){
+            std::string var_name=pair.first;
+
+            int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
+            int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
+
+        Value * v;
+        Value * val;
+
+            if(var_type==0){ ///INTEGER
+
+                 llvm::PointerType* pointerType = TheVarsInt->getType();
+                  v = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), var_name);
+                 val =  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, var_name);
+              }
+      if(var_type==1){ ///CHAR
+
+        llvm::PointerType* pointerType = TheVarsChar->getType();
+          v = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), var_name);
+          val =  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, var_name);
+    }
+
+            keep_variables_values[var_name].push(val);
+
+        }
+   }
+
+    Value * result = Builder.CreateCall(TheModule->getFunction(id.getName()),params);
+   
+    ///NEED TO POP AND REPLACE IN TheVarsInt - TheVarsChar
+      for(const auto& pair: variable_function){
+    
+        if(pair.second==function_name){
+            std::string var_name=pair.first;
+
+            int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
+            int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
+
+            Value * old_val = keep_variables_values[var_name].top();
+            keep_variables_values[var_name].pop();
+
+          
+
+            if(var_type==0){ ///INTEGER
+
+                 llvm::PointerType* pointerType = TheVarsInt->getType();
+                  v = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), var_name);
+                  Builder.CreateStore(old_val, v); 
+              }
+            if(var_type==1){ ///CHAR
+
+                llvm::PointerType* pointerType = TheVarsChar->getType();
+                v = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), var_name);
+                 Builder.CreateStore(old_val, v); 
+                
+            }
+
+            
+
+        }
+   }
+
+
+    return result;
    
 }
 
@@ -965,6 +1169,31 @@ Value * Id::compile(){
     
     std::string var_name = active_fun + "-" + name;
 
+
+    // Return Value of  Variable for assign
+
+    int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
+    int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
+
+    if(var_type==0){ ///INTEGER
+
+         llvm::PointerType* pointerType = TheVarsInt->getType();
+         Value * v = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
+         return  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
+    }
+    if(var_type==1){ ///CHAR
+
+        llvm::PointerType* pointerType = TheVarsChar->getType();
+         Value * v = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), name);
+         return  Builder.CreateLoad(Type::getInt8Ty(TheContext), v, name);
+
+
+    }
+
+
+
+
+    /*
     if(from_func_call){ ///We expect to pass reference  
      
         int c=-1;
@@ -989,7 +1218,7 @@ Value * Id::compile(){
 
             
         bool ref = args_ref[c];  ///Function thelei Deikti san parametro True/Fale
-        llvm::Value* v ; 
+       // unused llvm::Value* v ; 
         
         if(var_type==0){ ///INTEGER
        
@@ -1026,7 +1255,8 @@ Value * Id::compile(){
    }
 
    else{                ///variable is not Parameter
-    llvm::Value* v;
+    /// unused llvm::Value* v;
+    
     
     if(var_type==0){ ///INTEGER
 
@@ -1111,11 +1341,13 @@ Value * Id::compile(){
 
         if(ref){                ///VARIABLE INTEGER
             v=activefunction->getArg(c);
+            
             return  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
         }
-        else
-
-        return activefunction->getArg(c);
+        else{
+            // activefunction->getArg(c)->print(llvm::outs());
+            return activefunction->getArg(c);
+        }
         }
        
     }
@@ -1202,6 +1434,7 @@ Value * Id::compile(){
  
    
     }
+    */
     return nullptr;
 }
 
@@ -1321,8 +1554,14 @@ Value * Ascii::compile() {
 }
 
 Value* Chr::compile() {
-    
-    Value *val = llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), num);
-    Value *n64 = Builder.CreateSExt(val, i64, "ext");
-    return Builder.CreateCall(TheChr, {n64});
+    if(flag == 0){
+        Value *val = llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), num);
+        Value *n64 = Builder.CreateSExt(val, i64, "ext");
+        return Builder.CreateCall(TheChr, {n64});
+    }
+    else{
+        Value * v = id.compile();
+        
+        return Builder.CreateCall(TheChr, {v});
+    }
 }

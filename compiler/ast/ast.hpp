@@ -589,7 +589,7 @@ private:
 
 class Chr : public Expr {
 public : 
-    Chr(int n) : num(n) {}
+    Chr(int n, Id i, int b) : num(n),id(i),flag(b) {}
     void printAST(std::ostream &out) const override;
     virtual Value * compile() override;
     virtual char* getName() override {
@@ -598,6 +598,8 @@ public :
 
 private:
     int num;
+    Id id;
+    int flag;
 };
 
 #endif

@@ -280,7 +280,8 @@ expr:
         | T_readChar '(' ')'                                        { $$ = new ReadChar(); }
         | T_ascii '(' T_const_char ')'                              { $$ = new Ascii($3,nullptr,0); }
         | T_ascii '(' T_id ')'                                      { $$ = new Ascii(nullptr,$3,1); }
-        | T_chr '(' T_const_int ')'                                 { $$ = new Chr($3); }
+        | T_chr '(' T_const_int ')'                                 { $$ = new Chr($3,nullptr,0); }
+        | T_chr '(' T_id ')'                                        { $$ = new Chr(-1,$3,1); }
         ;
 
 expr_high: 

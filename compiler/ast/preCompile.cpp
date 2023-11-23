@@ -5,12 +5,15 @@
 
 std::pair < int , bool > parameter;  /// TYPE - BOOL REF
 
+std::map < std::string , std::string > variable_function;///Find the function that  variable is located
 std::map < std::string , std::string > parent;   ///Find the previus function
+
 std::map < std::string , int > vars; /// Find the position of variable in VARS
 std::map < std::string , int > vartype;  /// Find the Type - REF for variable/parameter
 std::map < std::string , bool > varref;
 std::map < std::string , int > maparrayint;
 std::map < std::string , int > maparraychar;
+
 
 int int_counter=0;
 int char_counter=0;
@@ -52,11 +55,11 @@ std::cout<<endl;
    for(const auto& pair: varref){
     std::cout<<"Name: " << pair.first << " - Ref: " << std::boolalpha << pair.second<<std::endl;
    }
-
+    std::cout<<endl;
     for(const auto& pair: maparrayint){
     std::cout<<"Array Int Name: " << pair.first << " - Size: " << pair.second<<std::endl;
    }
-
+    std::cout<<endl;
     for(const auto& pair: maparraychar){
     std::cout<<"Array Char Name: " << pair.first << " - Size: " << pair.second<<std::endl;
    }
@@ -66,6 +69,10 @@ std::cout<<endl;
 
     for(const auto& pair: parent){
     std::cout<<"Name: " << pair.first << " - Parent: " << pair.second<<std::endl;
+   }
+    std::cout<<endl;
+   for(const auto& pair: variable_function){
+    std::cout<<"Name: " << pair.first << " - Function: " << pair.second<<std::endl;
    }
 }
 
@@ -91,9 +98,13 @@ void Local_def_gen::preCompile(){
 
 void Header::preCompile() {
     /// ? add fun_name , return type in maps ?
+    
+    ///Get the name of the function
     std::string name = nam.getName();
-    parent[name]=prev_fun;
-    prev_fun=name;
+    parent[name]=prev_fun;  /// parent of this function
+    prev_fun=name;  ///prev_fun = active function
+
+
     if(fpar_def != nullptr) fpar_def->preCompile();
     if(fpar_def_gen != nullptr) fpar_def_gen->preCompile();
 
@@ -111,6 +122,7 @@ void Var_def::preCompile(){
 
     vartype[new_var] = parameter.first;
     varref[new_var]=parameter.second;
+    variable_function[new_var]=prev_fun;
 
     if(parameter.first == TYPE_int){
         
@@ -171,8 +183,8 @@ void Func_def::preCompile (){
     block -> preCompile();
 
     prev_fun = find_parent(prev_fun);
-
-    /*if(prev_fun=="emptyfun"){
+    /*
+    if(prev_fun=="emptyfun"){
         printThis();
 
     }*/
@@ -186,6 +198,7 @@ void Comma_id_gen::preCompile(){
 
     vartype[new_var] = parameter.first;
     varref[new_var]=parameter.second;
+    variable_function[new_var]=prev_fun;
 
     if(parameter.first == TYPE_int){
 
@@ -226,16 +239,17 @@ void Fpar_def_gen::preCompile(){
 
 void Fpar_def::preCompile(){
 
-    parameter.first = fpar_type->getType();
-    parameter.second = ref;
+    parameter.first = fpar_type->getType(); // Integer or Char
+    parameter.second = ref; ///Parameter is reference or not
     array_size=-1;
 
 
-    std::string new_var;
+    std::string new_var;       ///new variable 
     new_var = prev_fun + "-" + name.getName();
 
     vartype[new_var] = parameter.first;
     varref[new_var]=parameter.second;
+    variable_function[new_var]=prev_fun;
 
     if(parameter.first == TYPE_int){
         int_counter++;

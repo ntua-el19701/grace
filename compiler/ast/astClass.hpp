@@ -26,6 +26,9 @@ extern int array_char_size;
 extern std::map < std::string , int > maparrayint;
 extern std::map < std::string , int > maparraychar;
 
+extern std::map < std::string , std::string > variable_function; ///Find the function that  variable is located
+
+
 extern std::stack <llvm::BasicBlock*> pattern;
 extern llvm::BasicBlock *activeBB;
 

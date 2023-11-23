@@ -1,16 +1,38 @@
 fun main() : nothing
-var e : int;
+var e,a : int;
+var array,b : int;
 fun vic(x : int) : int
 var pi:int;
+fun ilias (j:int): int
+
+   var pppp:int;
 {
-   pi<-x+2;
+   writeInteger(j);
+      return 1;
+}
+{
+   pi<-x+5; 
+   
+   ilias(pi);
+   writeInteger(pi);
+   
+   x<-x+2;
+
    writeInteger(x);
-   $x<-2;
-   $writeInteger(x);
+
+   
+
+   
    return x;
 }
 
 {
-   e <- vic(3);
-   writeInteger(e);
+   
+   e<-2;
+   a <- vic(e);
+   writeInteger(a);
+   a <- ilias(2);
+   writeInteger(a);
+
+  
 }
