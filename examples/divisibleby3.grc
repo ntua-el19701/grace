@@ -1,28 +1,17 @@
-$$
-  In this test grace program three functions that use one another will be
-  declared and then later defined. Also a stress-test of the scopes of variables
-  takes place.
-
-  The functions 'mod3isX' are using one another recursively. Also the name 'n'
-  is the only variable/parameter name in the whole program.
-$$
 
 fun main() : nothing
   var n : int;
 
   fun divisibleBy3(n : int) :int
-    var z:int;
     fun mod3is0(ref n : int) : int;
     fun mod3is1(n : int) : int;
     fun mod3is2(ref n : int) : int;
 
-    fun mod3is1(n : int) : int
-     {
+    fun mod3is1(n : int) : int {
       if n = 0 then
         return 0;
       else {
         n <- n - 1;
-        z <- 2;
         return mod3is2(n);
       }
     }
@@ -46,10 +35,10 @@ fun main() : nothing
 
 
 { $ main
-  n <- 54;
-  $writeInteger(n);
-  $writeString(" is ");
-  if divisibleBy3(n) # 1 then ;
-   $ writeString("not ");
- $ writeString("divided by 3.\n");
+  n <-readInteger();
+  writeInteger(n);
+  writeString(" is ");
+  if divisibleBy3(n) # 1 then
+    writeString("not ");
+  writeString("divided by 3.\n");
 } $ main

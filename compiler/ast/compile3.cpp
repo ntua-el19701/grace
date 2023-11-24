@@ -1,6 +1,6 @@
 #include "ast.hpp"
 #include <stack>
-
+/// COMPILE REF BRAKES - NOT REF
 llvm::BasicBlock *activeBB;
 std::stack <llvm::BasicBlock*> pattern;
 

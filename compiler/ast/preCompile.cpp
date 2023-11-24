@@ -9,7 +9,7 @@ std::map < std::string , std::string > variable_function;///Find the function th
 std::map < std::string , std::string > parent;   ///Find the previus function
 
 std::map < std::string , int > vars; /// Find the position of variable in VARS
-std::map < std::string , int > vartype;  /// Find the Type - REF for variable/parameter
+std::map < std::string , int > vartype;  /// Find the Type 
 std::map < std::string , bool > varref;
 std::map < std::string , int > maparrayint;
 std::map < std::string , int > maparraychar;

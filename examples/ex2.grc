@@ -1,25 +1,24 @@
 fun main() : nothing 
 
 var z:int;
+var x:int;
+fun solve (ref  p:int; r : int) :int
 
-fun solve (ref p:int) :nothing
-var c,d : char;
-var x,a : int;
  {
-    x <- 0;
 
-    a <- p+x;
-
-
-    solve(a)
+    p<-readInteger();
+   if(p<100) then return solve(r , p); 
+   else
+   return p+r; 
 
  }
 {
 
-    z<-3;
+    x<-5;
+    z<-readInteger();
 
-    z<-z+5;
+    x<-solve(z,x);
+    writeInteger(x);
     writeInteger(z);
 
-    $solve();
 }
