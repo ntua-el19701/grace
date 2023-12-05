@@ -61,7 +61,7 @@ public:
 
 
   // Initialize global variables Array Int
-  llvm::ArrayType *vars_type_int = ArrayType::get(i32, int_counter+5);
+  llvm::ArrayType *vars_type_int = ArrayType::get(i32, int_counter+array_int_size+5);
     TheVarsInt = new GlobalVariable(
       *TheModule, vars_type_int, false, GlobalValue::PrivateLinkage,
       ConstantAggregateZero::get(vars_type_int), "vars_int");
@@ -69,7 +69,7 @@ public:
 
 
    // Initialize global variables Array Char
-    llvm::ArrayType *vars_type_char = ArrayType::get(i8, char_counter+5);
+    llvm::ArrayType *vars_type_char = ArrayType::get(i8, char_counter+array_char_size+5);
     TheVarsChar = new GlobalVariable(
       *TheModule, vars_type_char, false, GlobalValue::PrivateLinkage,
       ConstantAggregateZero::get(vars_type_char), "vars_char");
@@ -186,7 +186,7 @@ public:
     }
 
     // Optimize!
-   // TheFPM->run(*main);
+     TheFPM->run(*main);
 
     // Print out the IR.
     TheModule->print(llvm::outs(), nullptr);

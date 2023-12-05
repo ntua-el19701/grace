@@ -226,8 +226,7 @@ stmt:
         | T_while cond T_do stmt                                    { $$ = new While($2, $4); }
         | T_return ';'                                              { $$ = new Return(nullptr); }
         | T_return expr ';'                                         { $$ = new Return($2); }
-        | T_writeInteger '(' T_id ')' ';'                           { $$ = new Write_Integer($3, -1); }
-        | T_writeInteger '(' T_const_int ')' ';'                    { $$ = new Write_Integer(nullptr, $3); }
+        | T_writeInteger '(' expr ')' ';'                           { $$ = new Write_Integer($3); }
         | T_writeChar '(' T_id ')' ';'                              { $$ = new Write_Char($3, nullptr,0); }
         | T_writeChar '(' T_const_char ')' ';'                      { $$ = new Write_Char(nullptr,$3,1); }
         | T_writeString '(' T_id ')' ';'                            { $$ = new Write_String($3,nullptr,0); }

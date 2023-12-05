@@ -516,13 +516,13 @@ private:
 
 class Write_Integer : public Stmt {
 public:
-    Write_Integer(Id d, int i) : id(d), n(i){}
+    Write_Integer(Expr *ei) : e(ei){}
     void printAST(std::ostream &out) const override;
     virtual Value * compile() override;
     virtual void sem() override;
 private:
-    Id id;
-    int n;
+    Expr *e;
+    
    
 };
 

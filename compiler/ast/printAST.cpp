@@ -282,8 +282,8 @@ void Cond::printAST(std::ostream &out) const  {
  void Write_Integer::printAST(std::ostream &out) const  {
         
         out << "Write_Integer(";
-        if(n == -1) {out << id;}
-        else out<<n;
+        out << e;
+        
         out<< ")";
   }
 

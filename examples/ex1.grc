@@ -1,7 +1,52 @@
-fun main() : nothing
+fun main () : nothing 
 
-var ans : int;   
-{
-   ans <- prime(2);
-   writeInteger(ans);
-}
+   fun bsort (n : int;  x : int) : nothing
+   
+    
+      var changed, i : int;
+      
+   { $ bsort
+      changed <- 1;
+      while changed > 0 do {
+         changed <- 0;
+         i <- 0;
+         while i < n-1 do {
+            if x > 1 then {
+               swap(x, changed);
+               changed <- 0;
+            } 
+            i <- i+1;
+         }
+      }
+   } $ bsort
+
+   fun writeArray ( n : int;  x : int) : nothing
+      var i : int;
+   {
+      writeString("hi");
+      i <- 0;
+      while i < n do {
+         if i > 0 then writeString(", ");
+         writeInteger(x);
+         i <- i+1;
+         
+      }
+      writeString("\n");
+   }
+   
+   var seed, i : int;
+   var x       : int;
+   
+{ $ main
+   seed <- 65;
+   i <- 0;
+   while i < 16 do {
+      seed <- (seed * 137 + 221 + i) mod 101;
+      x <- seed;
+      i <- i+1;
+   } 
+   
+   writeArray(16, x);
+   bsort(16, x);
+   writeArray(16, x);
+} $ main

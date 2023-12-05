@@ -15,9 +15,9 @@ std::map < std::string , int > maparrayint;
 std::map < std::string , int > maparraychar;
 
 
-int int_counter=0;
-int char_counter=0;
-int fun_counter=0;
+int int_counter=1;
+int char_counter=1;
+
 int array_int_counter=0;
 int array_char_counter=0;
 int array_size=-1;
@@ -183,11 +183,13 @@ void Func_def::preCompile (){
     block -> preCompile();
 
     prev_fun = find_parent(prev_fun);
+    
     /*
     if(prev_fun=="emptyfun"){
         printThis();
 
-    }*/
+    }
+    */
     
 }
 
@@ -200,12 +202,14 @@ void Comma_id_gen::preCompile(){
     varref[new_var]=parameter.second;
     variable_function[new_var]=prev_fun;
 
+
     if(parameter.first == TYPE_int){
 
         if(array_size!=-1){ //Integer Array
             maparrayint[new_var] = array_size;
             array_int_counter++;
              array_int_size+=array_size;
+             
          
         }
         else{   //Integer Variable
@@ -218,6 +222,7 @@ void Comma_id_gen::preCompile(){
             maparraychar[new_var] = array_size;
             array_char_counter++;
             array_char_size+=array_size;
+            
            
         }
         else{   //Char Variable

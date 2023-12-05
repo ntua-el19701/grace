@@ -1,6 +1,6 @@
 fun main () : nothing 
 
-   fun bsort (n : int; ref x : int[]) : nothing
+   fun bsort (n : int;  x : int[]) : nothing
    
       fun swap (ref x, y : int) : nothing
          var t : int;
@@ -11,6 +11,7 @@ fun main () : nothing
       }
    
       var changed, i : int;
+      var d1,d2 :int;
       
    { $ bsort
       changed <- 1;
@@ -19,7 +20,10 @@ fun main () : nothing
          i <- 0;
          while i < n-1 do {
             if x[i] > x[i+1] then {
+               d1<-x[i];
+               d2<-x[i+1];
                swap(x[i], x[i+1]);
+              
                changed <- 1;
             } 
             i <- i+1;
@@ -27,14 +31,14 @@ fun main () : nothing
       }
    } $ bsort
 
-   fun writeArray (ref msg : char[]; n : int; ref x : int[]) : nothing
+   fun writeArray ( n : int;  x : int[]) : nothing
       var i : int;
    {
-      writeString(msg);
+      
       i <- 0;
       while i < n do {
          if i > 0 then writeString(", ");
-         writeInteger(x);
+         writeInteger(x[i]);
          i <- i+1;
          
       }
@@ -43,6 +47,7 @@ fun main () : nothing
    
    var seed, i : int;
    var x       : int[16];
+   var arrris : int[0];
    
 { $ main
    seed <- 65;
@@ -52,8 +57,15 @@ fun main () : nothing
       x[i] <- seed;
       i <- i+1;
    } 
+    i <- 0;
+   while i < 16 do {
+     writeInteger(x[i]);
+     writeString(", ");
+
+      i <- i+1;
+   } 
    
- $  writeArray("Initial array: ", 16, x);
+   writeArray(16, x);
    bsort(16, x);
-  $ writeArray("Sorted  array: ", 16, x);
+   writeArray(16, x);
 } $ main

@@ -1,6 +1,6 @@
 #include "ast.hpp"
 #include <stack>
-/// COMPILE REF BRAKES - NOT REF
+//CORRECT EVERYTHING EXCEPT ARRAYS
 llvm::BasicBlock *activeBB;
 std::stack <llvm::BasicBlock*> pattern;
 
@@ -22,10 +22,19 @@ llvm::Function *activefunction;
 
 Typos keepheadertype;     
 
+
+
+Value* arrayAllocationInt = nullptr;
+Value* arrayAllocationChar = nullptr;
+int int_references_counter=0;
+int char_references_counter=0;
+
 std::vector < llvm :: Type * > args; /// parameters to insert (reference + kanoniko)
 std::vector < std::string > args_name; ///name of parameters in the function
 std::vector < bool > args_array; ///name of parameters in the function
 std::vector < llvm:: Value * > params; /// parameters to call a function
+
+std::map < std::string , int > array_is_ref;
 
 std::map < std::string , std::vector < bool > > func_ref;
 
@@ -33,12 +42,13 @@ std::map < std::string , llvm::Function *> declared_function;
 
 std::map < std::string , stack < llvm:: Value * > > keep_variables_values;
 
-std::stack < std::map < std::string , llvm:: Value * > > var_references;
+std::map < std::string , int > reference_position;
 
-
+std::map < std::string , stack < llvm:: Value * > > keep_references_pointers;
 
 std::vector <bool> args_ref; // true: argument is reference , false: argument not reference
 
+std::map < std::string , int > this_is_ref;
 
 std::string find_parents(std::string child){
 
@@ -85,7 +95,7 @@ std::string header_name;
 bool is_assign=false;
 bool is_integer=true;
 bool array_variable=false;
-bool need_pointer=false;
+bool from_func_call=false;
 bool from_func_decl=false;
 
 
@@ -172,6 +182,9 @@ Value * Header::compile() {
     std::string name = nam.getName();
     active_fun=name;
 
+    int_references_counter=0;
+    char_references_counter=0;
+
     if(active_fun=="main"){
         active_fun="main.1";
     }
@@ -233,9 +246,22 @@ Value * Header::compile() {
     activefunction=function;
 
     func_ref[name]=args_ref;
-
+   
+    Type * intPointerType = Type::getInt32PtrTy(TheContext);
+    Type * charPointerType = Type::getInt8PtrTy(TheContext);    
     std::map < std::string , llvm::Value * > ref_params; 
     ref_params.clear();
+    if(int_references_counter != 0){
+        
+        arrayAllocationInt = Builder.CreateAlloca(ArrayType::get(intPointerType, int_references_counter), nullptr,"ArrayIntPointers");
+    }
+    if(char_references_counter!=0){
+       
+        arrayAllocationChar = Builder.CreateAlloca(ArrayType::get(charPointerType, char_references_counter), nullptr,"ArrayCharPointers");
+    }
+
+    int int_pos=0;
+    int char_pos=0;
 
     for(auto i=0;i<args_name.size();i++){
         
@@ -250,11 +276,27 @@ Value * Header::compile() {
 
         if(is_ref){ ///This is for reference parameters
 
-            ref_params[var_name]=rhs;
+            if(var_type==0){ ///INTEGER
+                Value * pointer = Builder.CreateGEP(intPointerType,arrayAllocationInt,c32(int_pos),"pointerInt");
+                Builder.CreateStore(rhs,pointer);
+                reference_position[var_name]=int_pos;
+                int_pos++;
+
+            }
+
+            if(var_type==1){ ///Char
+             Value * pointer = Builder.CreateGEP(charPointerType,arrayAllocationChar,c32(char_pos),"pointerChar");
+            Builder.CreateStore(rhs,pointer);
+            reference_position[var_name]=char_pos;
+            char_pos++;
+            }
+
+            
+          
+            
 
         }   ///END OF REFERENCE
-
-    else {  ///NOT REFERENCE
+         else {  ///NOT REFERENCE
         if(var_type==0){ ///INTEGER
 
        if(1<0){ ///Array case
@@ -283,11 +325,13 @@ Value * Header::compile() {
 
 
         }
-    }   ///END OF NOT REFERENCE
+        
+    }///END OF NOT REFERENCE
+       
 
-    var_references.push(ref_params);
+
+
     }
-
     }
     else{
     std::string name = nam.getName();
@@ -391,6 +435,7 @@ Value * Comma_id_gen::compile(){
         if(varref[par_name]==true){
         args.push_back(Builder.getInt32Ty()->getPointerTo());  //if reference
         args_ref.push_back(true);
+        int_references_counter++;
     }
     else{
     args.push_back(i32);
@@ -424,6 +469,7 @@ Value * Comma_id_gen::compile(){
         if(varref[par_name]==true){
             args.push_back(Builder.getInt8Ty()->getPointerTo());  //if reference
             args_ref.push_back(true);
+            char_references_counter++;
         }
         else{
             args.push_back(i8);
@@ -494,6 +540,7 @@ Value * Fpar_def::compile(){
     if(varref[par_name]==true){
         args.push_back(Builder.getInt32Ty()->getPointerTo());  //if reference
         args_ref.push_back(true);
+        int_references_counter++;
     }
     else{
    //args.push_back(Builder.getInt32Ty()->getPointerTo()); if reference
@@ -529,6 +576,7 @@ Value * Fpar_def::compile(){
     if(varref[par_name]==true){
         args.push_back(Builder.getInt8Ty()->getPointerTo());  //if reference
         args_ref.push_back(true);
+        char_references_counter++;
     }
     else{
     args.push_back(i8);
@@ -564,7 +612,7 @@ Value * L_value::compile(){
     
     if(flag == 1){ /// id
     
-    if((is_assign)||(need_pointer)){
+    if(is_assign){
 
         std::string name=id.getName();
         std::string var_name = active_fun + "-" + name;
@@ -573,18 +621,27 @@ Value * L_value::compile(){
          int var_pos = vars[var_name];
          bool is_ref = varref[var_name];
 
+    if(is_ref){ //REFERENCE
 
-        if(is_ref){ ///REFERENCES
+        int pos = reference_position[var_name];
 
-            std::map < std::string , llvm::Value * > ref_params = var_references.top();
+        if(var_type==0){ ///INTEGER
+            Type * intPointerType = Type::getInt32PtrTy(TheContext);
+            Value * pointer =  Builder.CreateGEP(intPointerType,arrayAllocationInt,c32(pos),"pointerInt");
+            Value * v = Builder.CreateLoad(Type::getInt32PtrTy(TheContext), pointer, name);
+            return  v;
+        }
+        if(var_type==1){ ///CHAR
+            Type * charPointerType = Type::getInt8PtrTy(TheContext);
+            Value * pointer =  Builder.CreateGEP(charPointerType,arrayAllocationChar,c32(pos),"pointerChar");
+            Value * v = Builder.CreateLoad(Type::getInt8PtrTy(TheContext), pointer, name);
+            return  v;
+        }
 
-            Value * v = ref_params[var_name];
 
-            return v;
-        }//END REFERENCES
+    } //END REFERENCE
 
-          else{ //NOT REFERENCE
-
+        else{///NOT REFERENCE
          if(var_type==0){ ///INTEGER
 
             llvm::PointerType* pointerType = TheVarsInt->getType();
@@ -602,7 +659,7 @@ Value * L_value::compile(){
          }
 
          }
-          }///END NOT REFERENCES
+        }///END NOT REFERENCE
 
     }
 
@@ -789,6 +846,9 @@ Value * Func_call_stmt::compile(){
    
     Value *v;
     
+    
+    this_is_ref.clear();
+
     params.clear();
 
     header_name = id.getName();
@@ -799,19 +859,26 @@ Value * Func_call_stmt::compile(){
     if(expr!=nullptr) {
         
         if(func_ref[header_name][position]==false){ ///PARAMETER NOT REFERENCE
-        v = expr->compile();
+
+         v = expr->compile();
          params.push_back(v);
         }
         
         else{                               ///PARAMETER REFERENCE
-                            /// IF SIZE ARRAY!=-1 => WE HAVE ARRAY
-            need_pointer=true;
+            size_array=-1;                  /// IF SIZE ARRAY!=-1 => WE HAVE ARRAY
+            is_assign=true;
+                std::string var_name=active_fun + "-" + expr->getName();
               v = expr->compile();
+              this_is_ref[var_name]=1;
               params.push_back(v);
             
-      
+            if(size_array!=-1){
+                params.push_back(son);
+                position++;
+
+            }
             
-            need_pointer=false;
+            is_assign=false;
         }
         position++;
         
@@ -825,22 +892,15 @@ Value * Func_call_stmt::compile(){
 
     for(const auto& pair: variable_function){
     
-        if(pair.second==function_name){
+        if((pair.second==function_name)&&(this_is_ref[pair.first]!=1)){
             std::string var_name=pair.first;
 
             int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
             int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
-             bool is_ref = varref[var_name];
-
-
 
         Value * v;
         Value * val;
 
-    if(is_ref){ ///REFERENCES
-    
-    } ///END REFERENCE
-    else{ // NOT REFERENCES
             if(var_type==0){ ///INTEGER
 
                  llvm::PointerType* pointerType = TheVarsInt->getType();
@@ -849,40 +909,31 @@ Value * Func_call_stmt::compile(){
               }
       if(var_type==1){ ///CHAR
 
-        llvm::PointerType* pointerType = TheVarsChar->getType();
+          llvm::PointerType* pointerType = TheVarsChar->getType();
           v = Builder.CreateGEP(pointerType, TheVarsChar, c32(var_pos), var_name);
           val =  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, var_name);
     }
 
             keep_variables_values[var_name].push(val);
-    } ///END NOT REFERENCE
+
         }
-   } 
+   }
 
     Value * result = Builder.CreateCall(TheModule->getFunction(id.getName()),params);
-
-    var_references.pop();
    
     ///NEED TO POP AND REPLACE IN TheVarsInt - TheVarsChar
       for(const auto& pair: variable_function){
     
-        if(pair.second==function_name){
+        if((pair.second==function_name)&&(this_is_ref[pair.first]!=1)){
             std::string var_name=pair.first;
 
             int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
             int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
-            bool is_ref = varref[var_name];
 
-
-    if(is_ref){ ///REFERENCES
-
-    } ///END REFERENCE
-    else{ ///NOT REFERENCE
             Value * old_val = keep_variables_values[var_name].top();
             keep_variables_values[var_name].pop();
 
           
-
             if(var_type==0){ ///INTEGER
 
                  llvm::PointerType* pointerType = TheVarsInt->getType();
@@ -898,39 +949,40 @@ Value * Func_call_stmt::compile(){
             }
 
             
-    }   ///END NOT REFERENCE
+
         }
    }
 
 
     return result;
 }
- 
-        
-       
-        
-    
-    
 
 Value * Comma_expr_gen::compile(){
    
    Value * v;
     
         
-      if(func_ref[header_name][position]==false){ ///PARAMETER NOT REFERENCE
-        v = expr->compile();
+        if(func_ref[header_name][position]==false){ ///PARAMETER NOT REFERENCE
+
+         v = expr->compile();
          params.push_back(v);
         }
         
         else{                               ///PARAMETER REFERENCE
-                            /// IF SIZE ARRAY!=-1 => WE HAVE ARRAY
-            need_pointer=true;
+            size_array=-1;                  /// IF SIZE ARRAY!=-1 => WE HAVE ARRAY
+            is_assign=true;
+                std::string var_name=active_fun + "-" + expr->getName();
               v = expr->compile();
+              this_is_ref[var_name]=1;
               params.push_back(v);
             
-      
+            if(size_array!=-1){
+                params.push_back(son);
+                position++;
+
+            }
             
-            need_pointer=false;
+            is_assign=false;
         }
         position++;
       
@@ -1050,9 +1102,12 @@ Value * Return::compile(){
 }
 
 Value * Func_call_expr::compile(){
-     
+    
     Value *v;
     
+    
+    this_is_ref.clear();
+
     params.clear();
 
     header_name = id.getName();
@@ -1063,19 +1118,26 @@ Value * Func_call_expr::compile(){
     if(expr!=nullptr) {
         
         if(func_ref[header_name][position]==false){ ///PARAMETER NOT REFERENCE
-        v = expr->compile();
+
+         v = expr->compile();
          params.push_back(v);
         }
         
         else{                               ///PARAMETER REFERENCE
-                            /// IF SIZE ARRAY!=-1 => WE HAVE ARRAY
-            need_pointer=true;
+            size_array=-1;                  /// IF SIZE ARRAY!=-1 => WE HAVE ARRAY
+            is_assign=true;
+                std::string var_name=active_fun + "-" + expr->getName();
               v = expr->compile();
+              this_is_ref[var_name]=1;
               params.push_back(v);
             
-      
+            if(size_array!=-1){
+                params.push_back(son);
+                position++;
+
+            }
             
-            need_pointer=false;
+            is_assign=false;
         }
         position++;
         
@@ -1089,22 +1151,15 @@ Value * Func_call_expr::compile(){
 
     for(const auto& pair: variable_function){
     
-        if(pair.second==function_name){
+        if((pair.second==function_name)&&(this_is_ref[pair.first]!=1)){
             std::string var_name=pair.first;
 
             int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
             int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
-             bool is_ref = varref[var_name];
-
-
 
         Value * v;
         Value * val;
 
-    if(is_ref){ ///REFERENCES
-    
-    } ///END REFERENCE
-    else{ // NOT REFERENCES
             if(var_type==0){ ///INTEGER
 
                  llvm::PointerType* pointerType = TheVarsInt->getType();
@@ -1119,34 +1174,25 @@ Value * Func_call_expr::compile(){
     }
 
             keep_variables_values[var_name].push(val);
-    } ///END NOT REFERENCE
+
         }
-   } 
+   }
 
     Value * result = Builder.CreateCall(TheModule->getFunction(id.getName()),params);
-
-    var_references.pop();
    
     ///NEED TO POP AND REPLACE IN TheVarsInt - TheVarsChar
       for(const auto& pair: variable_function){
     
-        if(pair.second==function_name){
+        if((pair.second==function_name)&&(this_is_ref[pair.first]!=1)){
             std::string var_name=pair.first;
 
             int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
             int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
-            bool is_ref = varref[var_name];
 
-
-    if(is_ref){ ///REFERENCES
-
-    } ///END REFERENCE
-    else{ ///NOT REFERENCE
             Value * old_val = keep_variables_values[var_name].top();
             keep_variables_values[var_name].pop();
 
           
-
             if(var_type==0){ ///INTEGER
 
                  llvm::PointerType* pointerType = TheVarsInt->getType();
@@ -1162,7 +1208,7 @@ Value * Func_call_expr::compile(){
             }
 
             
-    }   ///END NOT REFERENCE
+
         }
    }
 
@@ -1221,9 +1267,6 @@ Value * Id::compile(){
     
     std::string var_name = active_fun + "-" + name;
 
-        
-
-
 
     // Return Value of  Variable for assign
 
@@ -1231,32 +1274,33 @@ Value * Id::compile(){
     int var_pos = vars[var_name];   ///POSITION IN VARS TABLE , USELESS IF ID IS ARRAY
     bool is_ref = varref[var_name];
 
+    if(is_ref){ //REFERENCE
 
-    if(is_ref){ ///REFERENCES
+        int pos = reference_position[var_name];
 
-        std::map < std::string , llvm::Value * > ref_params = var_references.top();
-
-        Value * v = ref_params[var_name];
-        
-        if(var_type==0){
+        if(var_type==0){ ///INTEGER
+            Type * intPointerType = Type::getInt32PtrTy(TheContext);
+            Value * pointer =  Builder.CreateGEP(intPointerType,arrayAllocationInt,c32(pos),"pointerInt");
+            Value * v = Builder.CreateLoad(Type::getInt32PtrTy(TheContext), pointer, name);
             return  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
         }
-     
-     
-         if(var_type==1){ ///CHAR
-             return  Builder.CreateLoad(Type::getInt8Ty(TheContext), v, name);
-         }
+        if(var_type==1){ ///CHAR
+            Type * charPointerType = Type::getInt8PtrTy(TheContext);
+            Value * pointer =  Builder.CreateGEP(charPointerType,arrayAllocationChar,c32(pos),"pointerChar");
+            Value * v = Builder.CreateLoad(Type::getInt8PtrTy(TheContext), pointer, name);
+            return  Builder.CreateLoad(Type::getInt8Ty(TheContext), v, name);
+        }
 
-    }   ///END OF REFERENCE
-    else{   ///NOT REFERENCE
 
+    } //END REFERENCE
+
+    else{ ///NOT REFERENCE
     if(var_type==0){ ///INTEGER
 
          llvm::PointerType* pointerType = TheVarsInt->getType();
          Value * v = Builder.CreateGEP(pointerType, TheVarsInt, c32(var_pos), name);
          return  Builder.CreateLoad(Type::getInt32Ty(TheContext), v, name);
     }
-
     if(var_type==1){ ///CHAR
 
         llvm::PointerType* pointerType = TheVarsChar->getType();
@@ -1265,8 +1309,7 @@ Value * Id::compile(){
 
 
     }
-
-    }   ///END OF NOT REFERENCE
+    } ///END NOT REFERENCE
 
 
 
@@ -1529,27 +1572,16 @@ Value * Const_char::compile() {
 
 Value * Write_Integer::compile(){
 
-    if(n==-1){
-        
-        
-        Value *val = id.compile();
-      
-
-        //Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
-        Value *n64 = Builder.CreateSExt(val, i64, "ext");
-        Builder.CreateCall(TheWriteInteger, {n64});
-    }
-    else{
-
-    Value *val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(TheContext), n);
+    Value *val = e->compile();
     Value *n64 = Builder.CreateSExt(val, i64, "ext");
     Builder.CreateCall(TheWriteInteger, {n64});
-
-    }
-
+  
+  /*
     llvm::PointerType* pointerType = activefunction->getType();
     Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
     Builder.CreateCall(TheWriteString, {nl});
+
+    */
      return nullptr;
 }
 
@@ -1564,16 +1596,50 @@ Value * Write_String::compile(){
         new_str+=str[i];
     }
 
+
+    // Value * v = Builder.CreateGlobalString(StringRef(new_str),"varName");
+
+    //Builder.CreateCall(TheWriteString, {v});
+    std::string print_str="";
+    for(int i=0;i<new_str.size();i++){
+        
+        if(i<new_str.size()-1){
+            
+            if((new_str[i]=='\\') &&(new_str[i+1]=='n')){
+                if(print_str!=""){
+                    Value * v = Builder.CreateGlobalString(StringRef(print_str),"varName");
+
+                    Builder.CreateCall(TheWriteString, {v});
+                    print_str="";
+                }
+                llvm::PointerType* pointerType = activefunction->getType();
+                Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
+                Builder.CreateCall(TheWriteString, {nl});
+            
+            i++;
+            }
+            else
+            print_str+=new_str[i];
+
+        }
+        else
+
+        print_str+=new_str[i];
+    }
+
+    if(print_str!=""){
     Value * v = Builder.CreateGlobalString(StringRef(new_str),"varName");
 
     Builder.CreateCall(TheWriteString, {v});
+    }
 
     ///Print ARRAY CHAR
     // ----------------------------TO DO
-
+    /*
     llvm::PointerType* pointerType = activefunction->getType();
     Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
     Builder.CreateCall(TheWriteString, {nl});
+    */
     return nullptr;
 }
 

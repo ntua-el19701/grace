@@ -18,7 +18,7 @@ fun main () : nothing
       }
    }
    
-   var limit, number, counter,cout : int;
+   var limit, number, counter : int;
    
 { $ main
    writeString("Please, give me the upper limit: ");
@@ -39,14 +39,12 @@ fun main () : nothing
    while number <= limit do {
       if prime(number - 1) = 1 then {
          counter <- counter + 1;
-         cout <- number - 1;
-         writeInteger(cout);
+         writeInteger(number - 1);
          writeString("\n");
       }
       if number # limit and prime(number + 1) = 1 then {
          counter <- counter + 1;
-         cout <- number + 1;
-         writeInteger(cout);
+         writeInteger(number + 1);
          writeString("\n");
       }
       number <- number + 6;
