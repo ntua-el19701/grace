@@ -184,12 +184,16 @@ void Func_def::preCompile (){
 
     prev_fun = find_parent(prev_fun);
     
-    /*
+    
     if(prev_fun=="emptyfun"){
-        printThis();
+      //  printThis();
+      ///FILL word_length
+       for(const auto& pair: maparraychar){
+        word_length[pair.first]=pair.second;
+        }
 
     }
-    */
+    
     
 }
 

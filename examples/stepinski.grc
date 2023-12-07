@@ -2,22 +2,13 @@
 
 fun main(): nothing
 
-  $$
-  $ Function to generate and print the Sierpinski's Triangle pattern.
-  $ The input value of 'n' is used to calculate the number of iterations needed to generate the pattern.
-  $ Specifically, it determines the number of times the rule_90() function is applied to the initial row to create each row of the pattern.
-  $ The larger the value of n, the more intricate and detailed the Sierpinski's Triangle pattern will be because it will have more rows.
-  $$
+
   fun triangle(n: int): nothing
 
-    $$
-    $ Function to apply Rule 90 cellular automaton to a row of characters.
-    $$
+   
     fun rule_90(ref ev: char[]): nothing
 
-      $$
-      $ Helper function to check if the input character is '*'.
-      $$
+     
       fun is_star(c: char): int
       { $is_star
         if c = '*' then
@@ -26,9 +17,7 @@ fun main(): nothing
           return 0;
       } $is_star
 
-      $$
-      $ Helper function that simulates the XOR (exclusive OR) operation
-      $$
+      
       fun xor(x, y: int): int
       { $ xor
         if x = 1 and y = 0 or x = 0 and y = 1 then
@@ -43,17 +32,17 @@ fun main(): nothing
 
     { $ rule_90
       i <- 0;
-      l <- strlen(ev);
-      strcpy(cp, ev);
+      l <- 129 
+      
 
       while i < l do {
         if i - 1 < 0 then
           s[0] <- 0;
         else
-          s[0] <- is_star(cp[i-1]);
+          s[0] <- is_star(ev[i-1]);
 
         if i + 1 < l then
-          s[1] <- is_star(cp[i+1]);
+          s[1] <- is_star(ev[i+1]);
         else
           s[1] <- 0;
 
@@ -66,9 +55,7 @@ fun main(): nothing
       }
     } $ rule_90
 
-    $$
-    $ Helper function to calculate integer exponentiation using recursion.
-    $$
+   
     fun ipow(x, n: int): int
     { $ ipow
       if n <= 0 then
@@ -77,9 +64,7 @@ fun main(): nothing
         return x * ipow(x, n-1);
     } $ ipow
 
-    $$
-    $ Helper function that divides a given integer in half and rounds it to the nearest even number, as if it was float.
-    $$
+   
     fun round2(n: int): int
     { $round2
       if n mod 2 = 1 then 
@@ -103,13 +88,13 @@ fun main(): nothing
 
     row[round2(l)] <- '*';
     writeString(row);
-    writeChar('\n');
+   $ writeChar('\n');
 
     i <- 0;
     while i < l div 2 - 1 do {
       rule_90(row);
       writeString(row);
-      writeChar('\n');
+    $  writeChar('\n');
       i <- i + 1;
     }
   } $triangle

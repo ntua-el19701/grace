@@ -84,6 +84,9 @@ public:
   virtual char* getName() override {
         return nullptr;
     } 
+    char * getStr(){
+        return str;
+    }
   int eval() const  {
     return *str;
   }

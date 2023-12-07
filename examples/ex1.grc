@@ -1,52 +1,38 @@
-fun main () : nothing 
+fun main () : nothing
 
-   fun bsort (n : int;  x : int) : nothing
-   
-    
-      var changed, i : int;
-      
-   { $ bsort
-      changed <- 1;
-      while changed > 0 do {
-         changed <- 0;
-         i <- 0;
-         while i < n-1 do {
-            if x > 1 then {
-               swap(x, changed);
-               changed <- 0;
-            } 
-            i <- i+1;
-         }
-      }
-   } $ bsort
-
-   fun writeArray ( n : int;  x : int) : nothing
-      var i : int;
+   fun reverse (ref s,r : char[]) : nothing
+      var i, l : int;
+      var z:char;     
    {
-      writeString("hi");
+      $l <- strlen(s);
+      l <- 14;
       i <- 0;
-      while i < n do {
-         if i > 0 then writeString(", ");
-         writeInteger(x);
+      while i < l do {
+         r[i] <- s[l-i-1];
          i <- i+1;
-         
       }
-      writeString("\n");
+      r[i] <- '\0';
+      
+      z<-'w';
+     
+      writeChar(z);      
+      writeString(r);
+       z<-r[0];
+      r<-"abc";
+      writeString(r);
+      writeChar(z); 
+
+      
+   
+
    }
-   
-   var seed, i : int;
-   var x       : int;
-   
+var s,r : char[20];
 { $ main
-   seed <- 65;
-   i <- 0;
-   while i < 16 do {
-      seed <- (seed * 137 + 221 + i) mod 101;
-      x <- seed;
-      i <- i+1;
-   } 
-   
-   writeArray(16, x);
-   bsort(16, x);
-   writeArray(16, x);
+
+   s<-"\n!dlrow olleH";
+   reverse(s,r);
+   writeString(s);
+   writeString(r);
 } $ main
+
+

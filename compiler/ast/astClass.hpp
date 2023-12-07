@@ -15,6 +15,7 @@
 #include <llvm/Transforms/Utils.h>
 
 
+
 using namespace llvm;
 extern int int_counter;
 extern int char_counter; 
@@ -25,7 +26,7 @@ extern int array_char_size;
 
 extern std::map < std::string , int > maparrayint;
 extern std::map < std::string , int > maparraychar;
-
+extern std::map <std::string , int > word_length;
 extern std::map < std::string , std::string > variable_function; ///Find the function that  variable is located
 
 
