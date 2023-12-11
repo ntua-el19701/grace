@@ -2,10 +2,10 @@ fun main () : nothing
 
    var r : char[20];
 
-   fun reverse (ref s : char[]) : nothing
+   fun reverse (ref s,r : char[]) : nothing
       var i, l : int;
    {
-      l <- strlen(s);
+     
       l <- 7;
       i <- 0;
       while i < l do {
@@ -17,8 +17,10 @@ fun main () : nothing
       
    }
 
+   var x:char[20];
 { $ main
-   reverse("\n!dlrow olleH");
+   x<-"ferrari";
+   reverse(x,r);
    writeString(r);
 } $ main
 

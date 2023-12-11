@@ -2188,8 +2188,6 @@ state 158
    73     | cond "and" cond .
    74     | cond . "or" cond
 
-    "or"  shift, and go to state 118
-
     $default  reduce using rule 73 (cond)
 
 
@@ -2198,6 +2196,8 @@ state 159
    73 cond: cond . "and" cond
    74     | cond . "or" cond
    74     | cond "or" cond .
+
+    "and"  shift, and go to state 117
 
     $default  reduce using rule 74 (cond)
 

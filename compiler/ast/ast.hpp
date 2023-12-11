@@ -581,6 +581,7 @@ public:
     Ascii(char* c,Id i, bool f) : character(c), id(i), flag(f) {}
     void printAST(std::ostream &out) const override;
     virtual Value * compile() override;
+    virtual void sem() override;
     virtual char* getName() override {
     return nullptr;
   }
@@ -595,6 +596,7 @@ public :
     Chr(int n, Id i, int b) : num(n),id(i),flag(b) {}
     void printAST(std::ostream &out) const override;
     virtual Value * compile() override;
+    virtual void sem() override;
     virtual char* getName() override {
     return nullptr;
   }

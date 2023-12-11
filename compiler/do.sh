@@ -68,3 +68,33 @@ llc -o temp.s temp.ll
 clang -o a.out temp.s libgrc.a -no-pie
 rm temp.s temp.ll
 a.out
+
+grace <../examples/strrev.grc>  temp.ll
+llc -o temp.s temp.ll
+clang -o a.out temp.s libgrc.a -no-pie
+rm temp.s temp.ll
+a.out
+
+grace <../examples/error.grc>  temp.ll
+llc -o temp.s temp.ll
+clang -o a.out temp.s libgrc.a -no-pie
+rm temp.s temp.ll
+a.out
+
+grace <../examples/undvar.grc>  temp.ll
+llc -o temp.s temp.ll
+clang -o a.out temp.s libgrc.a -no-pie
+rm temp.s temp.ll
+a.out
+
+grace <../examples/wrongfunc.grc>  temp.ll
+llc -o temp.s temp.ll
+clang -o a.out temp.s libgrc.a -no-pie
+rm temp.s temp.ll
+a.out
+
+grace <../examples/redefine.grc>  temp.ll
+llc -o temp.s temp.ll
+clang -o a.out temp.s libgrc.a -no-pie
+rm temp.s temp.ll
+a.out

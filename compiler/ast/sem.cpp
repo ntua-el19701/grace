@@ -26,6 +26,9 @@ Typos keep_type;
 string keepidname;
 
 int dimensions_keep = -1;
+int func_counter = 0;
+
+std::map < std::string,int > functions_exist;
 
 std::vector<ParameterEntry> vec;    /// used in HEADER, Fpar_def , Fpar_def_gen
 std::vector<ParameterEntry> fcallparams; // used for func_Call
@@ -70,7 +73,12 @@ void Header::sem(){
     {
         vec.pop_back();
     }
+     if((fpar_def != nullptr)&&(func_counter==0)) yyerror("First Function Can't Have Arguments");
+    
+    func_counter=1;
 
+    
+    functions_exist[nam.getName()]=1;
     // Function declaration without or with body , -100 = No body , 0 = Has Body
     if(func_has_body==false){
      st.insert(nam.getName(),ret_type->getTypos(),ENTRY_FUNCTION, -100);
@@ -276,6 +284,10 @@ void Assign::sem() {
    
     //std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
     //std::cout<<"Real Dimensions:"<<arr_dimension_size_counter<<std::endl;
+
+     if(functions_exist[l_value->getName()]==1){
+         yyerror("This is a function!!!!!",l_value->getName() );
+     }
 
     expr->check_type(l_value->type); // check that the assigned type is the same as the type of the id
 
@@ -711,34 +723,34 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
     WRITE INTEGER
 */
 void Write_Integer::sem(){
-    if(n == -1){
+    /*if(n == -1){
     SymbolEntry *e = st.lookup(id.getName());
     type = e->type;
     if(type != TYPE_int)
         yyerror("Write_Integer only prints Integers!");
-    }
+    }*/
 }
 
 /*
     WRITE String
 */
 void Write_String::sem(){
-    if(flag == 0){
+   /* if(flag == 0){
     SymbolEntry *e = st.lookup(id.getName());
     type = e->type;
     if(type != TYPE_char)
         yyerror("Write_String only prints Strings!");
-    }
+    }*/
 }
 
 /*
     WRITE char
 */
 void Write_Char::sem(){
-    SymbolEntry *e = st.lookup(id.getName());
+    /*SymbolEntry *e = st.lookup(id.getName());
     type = e->type;
     if(type != TYPE_char)
-        yyerror("Write_Char only prints Chars!");
+        yyerror("Write_Char only prints Chars!");*/
 }
 /*
     ID
@@ -803,4 +815,13 @@ void StringConst::sem() {
 }
 void StringConst::arrayCheck(){
     yyerror("Wrong array index");
+}
+
+void Ascii::sem(){
+    type = TYPE_int;
+}
+
+void Chr::sem(){
+    type = TYPE_char;
+
 }

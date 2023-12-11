@@ -10,8 +10,10 @@ fun main(): nothing
 
       fun is_star(c: char): int
       { $is_star
-        if c = '*' then
+        if c = '*' then{
+          
           return 1;
+        }
         
         else
           return 0;
@@ -20,6 +22,7 @@ fun main(): nothing
      
       fun xor(x, y: int): int
       { $ xor
+        
         if x = 1 and y = 0 or x = 0 and y = 1 then
           return 1;
         else 
@@ -29,8 +32,11 @@ fun main(): nothing
       var l, i,j: int;
       var s: int[2];
       var cp: char[129];
+      var z:char;
 
     { $ rule_90
+ 
+     writeString(ev);
       i <- 0;
       l <- 32;
 
@@ -100,6 +106,7 @@ fun main(): nothing
 
     i <- 0;
     while i < l div 2 - 1 do {
+    
       rule_90(row);
       writeString(row);
 

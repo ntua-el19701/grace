@@ -1597,7 +1597,7 @@ Value * Write_String::compile(){
 
           int sizes=word_length[var_name];
 
-          if(sizes==0) sizes=20;
+          if(sizes==0) sizes=200;
           
       
 
