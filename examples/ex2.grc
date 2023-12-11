@@ -1,3 +1,6 @@
+$$
+this is a progamasa 
+$$
 fun main () : nothing
 
 var r:char[20];
@@ -5,10 +8,8 @@ var r:char[20];
 
    r<-"abc";
    writeString(r);
-   r[3]<-'\0';
+  
 
    r<-"b";
    writeString(r);
-
-
  }

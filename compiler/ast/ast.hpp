@@ -531,14 +531,13 @@ private:
 
 class Write_Char : public Stmt {
 public:
-    Write_Char(Id d, char* ni,int f) : id(d), str(ni),flag(f){}
+    Write_Char(Expr *ei) : e(ei){}
     void printAST(std::ostream &out) const override;
     virtual Value * compile() override;
     virtual void sem() override;
 private:
-    Id id;
-    char* str;
-    int flag;
+    Expr *e;
+
 };
 
 class Write_String : public Stmt {
@@ -606,5 +605,64 @@ private:
     Id id;
     int flag;
 };
+
+class ReadString : public Stmt {
+public:
+    ReadString(Expr *ei,Id i): e(ei), id(i){}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+   // virtual void sem() override;
+private:
+    Expr *e;
+    Id id;
+};
+
+class Strlen : public Expr {
+public:
+    Strlen(L_value* l): lv(l){}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+    virtual void sem() override;
+    virtual char* getName() override {
+    return nullptr;
+  }
+private:
+    L_value* lv;
+};
+
+class StrCmp : public Expr {
+public:
+    StrCmp(L_value* l, L_value* ll): lv1(l),lv2(ll){}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+    virtual void sem() override;
+    virtual char* getName() override {
+    return nullptr;
+  }
+private:
+    L_value* lv1, *lv2;
+};
+
+class StrCpy : public Stmt {
+public:
+    StrCpy(L_value* l, L_value* ll): lv1(l),lv2(ll){}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+    virtual void sem() override;
+   private:
+    L_value* lv1, *lv2;
+};
+
+class StrCat : public Stmt {
+public:
+    StrCat(L_value* l, L_value* ll): lv1(l),lv2(ll){}
+    void printAST(std::ostream &out) const override;
+    virtual Value * compile() override;
+    virtual void sem() override;
+    
+private:
+    L_value *lv1, *lv2;
+};
+
 
 #endif

@@ -1,9 +1,0 @@
-fun main() : nothing
-  var a, b : int;
-  fun double(ref x : int) : nothing { x <- x * 2; }
-
-{ $ main
-  a <- 4;
-  b <- 7;
-  double(a + b);
-} $ main

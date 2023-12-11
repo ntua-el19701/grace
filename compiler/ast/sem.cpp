@@ -77,8 +77,10 @@ void Header::sem(){
     
     func_counter=1;
 
-    
-    functions_exist[nam.getName()]=1;
+    if(func_has_body){
+         functions_exist[nam.getName()]=1;
+    }
+   
     // Function declaration without or with body , -100 = No body , 0 = Has Body
     if(func_has_body==false){
      st.insert(nam.getName(),ret_type->getTypos(),ENTRY_FUNCTION, -100);
@@ -500,6 +502,8 @@ void Fpar_def_gen::sem(){
 */
 
 void Type_gen::sem(){
+
+    if(size<=0)yyerror("Array Size Must be > 0");
     if(type_gen!=nullptr){
         array_dimension_counter++;
         type_gen->sem();
@@ -535,6 +539,8 @@ void Func_call_expr::sem(){
     {
         fcallparams.pop_back();
     }
+
+    if( functions_exist[id.getName()]!=1)yyerror("Undefined Function !",id.getName());
    SymbolEntry *s = st.lookup(id.getName());
    if (s != nullptr){ 
    FunctionEntry *f = ft.lookup(id.getName());   // find if there is a function with this name
@@ -655,6 +661,8 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
     {
         fcallparams.pop_back();
     }
+
+    if( functions_exist[id.getName()]!=1)yyerror("Undefined Function !",id.getName());
    SymbolEntry *s = st.lookup(id.getName());
    if (s != nullptr){ 
    FunctionEntry *f = ft.lookup(id.getName());   // find if there is a function with this name
@@ -824,4 +832,18 @@ void Ascii::sem(){
 void Chr::sem(){
     type = TYPE_char;
 
+}
+void Strlen::sem(){
+    type = TYPE_int;
+}
+
+void StrCmp::sem(){
+    type = TYPE_int;
+}
+
+void StrCat::sem(){
+   
+}
+void StrCpy::sem(){
+    
 }

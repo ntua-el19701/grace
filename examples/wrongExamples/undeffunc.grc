@@ -1,0 +1,21 @@
+
+
+fun main() : nothing
+  var airplaneLanded : int;
+  var travelerGuy, carGuy : char[10];
+
+  fun friendShowedUp(ref name : char[]) : int;
+
+  fun comePickMeUp(ref name : char[]) : nothing {
+    writeString(" - Hey, it\'s ");
+    writeString(name);
+    writeString(". I\'m at the airport and I\'m waiting for you!\n");
+  }
+
+{ $ main
+ 
+
+
+  if friendShowedUp(carGuy) = 1 then
+    writeString("\nEveryone went home that night.\n");
+} $ main

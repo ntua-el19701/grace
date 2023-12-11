@@ -78,9 +78,15 @@ FunctionTable ft;
 %token T_writeChar    "writeChar"
 %token T_writeString  "writeString"
 %token T_readInteger  "readInteger"
+%token T_readString  "readString"
 %token T_readChar  "readChar"
 %token T_ascii "ascii"
 %token T_chr "chr"
+%token T_strlen "strlen"
+%token T_strcmp "strcmp"
+%token T_strcpy "strcpy"
+%token T_strcat "strcat"
+
 
 
 %token<id>  T_id             
@@ -139,7 +145,7 @@ program:
         func_def 
         { $$ = $1;
        // std::cout << "AST: " << *$1<<std::endl; 
-        $1->sem(); 
+         $1->sem(); 
         //std::cout<<"SEM COMPLETED"<<std::endl;
         $1->preCompile();
         //std::cout<<"preCompile COMPLETED"<<std::endl;
@@ -227,10 +233,12 @@ stmt:
         | T_return ';'                                              { $$ = new Return(nullptr); }
         | T_return expr ';'                                         { $$ = new Return($2); }
         | T_writeInteger '(' expr ')' ';'                           { $$ = new Write_Integer($3); }
-        | T_writeChar '(' T_id ')' ';'                              { $$ = new Write_Char($3, nullptr,0); }
-        | T_writeChar '(' T_const_char ')' ';'                      { $$ = new Write_Char(nullptr,$3,1); }
+        | T_writeChar '(' expr ')' ';'                              { $$ = new Write_Char($3); }
         | T_writeString '(' T_id ')' ';'                            { $$ = new Write_String($3,nullptr,0); }
         | T_writeString '(' T_const_string ')' ';'                  { $$ = new Write_String(nullptr,$3,1); }
+        | T_readString '(' expr ',' T_id ')'                        { $$ = new ReadString($3, $5); }
+        | T_strcpy '(' l_value ',' l_value ')'                      { $$ = new StrCpy($3, $5); }        
+        | T_strcat '(' l_value ',' l_value ')'                      { $$ = new StrCat($3, $5); }        
 
         ;
 
@@ -281,6 +289,8 @@ expr:
         | T_ascii '(' T_id ')'                                      { $$ = new Ascii(nullptr,$3,1); }
         | T_chr '(' T_const_int ')'                                 { $$ = new Chr($3,nullptr,0); }
         | T_chr '(' T_id ')'                                        { $$ = new Chr(-1,$3,1); }
+        | T_strlen '(' l_value ')'                                  { $$ = new Strlen($3); }
+        | T_strcmp '(' l_value ','l_value ')'                       { $$ = new StrCmp($3, $5); }
         ;
 
 expr_high: 

@@ -52,6 +52,12 @@ PR ({L}|{D}|[ ~!:@.#$%^&*\(\)_+\[\]\|\{\}])
 "readChar"      { return T_readChar; }
 "ascii"         { return T_ascii; }
 "chr"           { return T_chr; }
+"readString"    { return T_readString; }
+"strlen"        { return T_strlen; }
+"strcmp"        { return T_strcmp; }
+"strcpy"        { return T_strcpy; }
+"strcat"        { return T_strcat; }
+
 
 \'({PR}|{ES})\'   { yylval.const_char = yytext; return T_const_char; } //for constant characters ('a')
 [\=\+\-\*\#\(\)\{\}\[\]\,\;\:\>\<]            { yylval.op = yytext[0]; return yytext[0]; }  

@@ -900,12 +900,23 @@ Value * Func_call_stmt::compile(){
         
         else{                               ///PARAMETER REFERENCE OR ARRAY
             
+
+
             int flag=0; 
            
             std::string var_name=active_fun + "-" + expr->getName();
 
+
             if(array_ref[header_name][position]==true){
 
+                 if(reference_position[var_name]!=0){ //////////////ARRAY IS REFERENCE WRONGGGGGGGGGGGGGGGGGGG
+                    int pos=reference_position[var_name];
+                              Type * intType = Type::getInt32Ty(TheContext);
+                             Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArray,c32(pos),"pointerArray");
+                            Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
+                            params.push_back(v);
+                 }
+                else{
             int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
             pair < int , int > possible_array;
             if(var_type==0){ ///INT
@@ -919,7 +930,7 @@ Value * Func_call_stmt::compile(){
              
                     flag=1;
 
-                    v = c32(possible_array.first);
+                    v = c32(possible_array.first);//////////IF REF
                      params.push_back(v);
 
                 }
@@ -951,6 +962,7 @@ Value * Func_call_stmt::compile(){
               params.push_back(v);
             
             is_assign=false;
+            }
             }
         
         
@@ -1698,7 +1710,15 @@ Value * Write_Char::compile(){
 
     ///---------------------------TO DO
 
-    if(flag==0){
+    Value *val = e->compile();
+    Builder.CreateCall(TheWriteChar, {val});
+     llvm::PointerType* pointerType = activefunction->getType();
+    Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
+    Builder.CreateCall(TheWriteString, {nl});
+     return nullptr;
+
+
+   /* if(flag==0){
         
         
         Value *val = id.compile();
@@ -1721,7 +1741,7 @@ Value * Write_Char::compile(){
     llvm::PointerType* pointerType = activefunction->getType();
     Value *nl = Builder.CreateGEP(pointerType, TheNL, {c32(0), c32(0)}, "nl");
     Builder.CreateCall(TheWriteString, {nl});
-     return nullptr;
+     return nullptr;*/
 }
 
 Value * ReadInteger::compile(){
@@ -1759,4 +1779,32 @@ Value* Chr::compile() {
         
         return Builder.CreateCall(TheChr, {v});
     }
+}
+
+Value * ReadString::compile(){
+    Value * v = e->compile();
+    Value *n64 = Builder.CreateSExt(v, i64, "ext");
+    Value * idv = id.compile(); ////READSTRING NEED POINTER
+    return Builder.CreateCall(TheReadString,{n64,idv});
+}
+
+Value * Strlen::compile(){
+    Value *v = lv->compile();
+    ////NEED TO CREATE A POINTER TO id
+    //return Builder.CreateCall(TheStrlen,{v});
+}
+
+Value * StrCmp::compile(){
+    Value *v1 = lv1->compile();
+    Value *v2 = lv2->compile();
+    
+}
+Value * StrCpy::compile(){
+    Value *v1 = lv1->compile();
+    Value *v2 = lv2->compile();
+   
+}
+Value * StrCat::compile(){
+    Value *v1 = lv1->compile();
+    Value *v2 = lv2->compile();
 }

@@ -292,10 +292,7 @@ void Cond::printAST(std::ostream &out) const  {
 */
  void Write_Char::printAST(std::ostream &out) const  {
        out << "Write_Char(";
-       if(flag==0){
-        out << id; }
-        else
-        out<<str[1];
+        out<<e;
 
         out<< ")";
          
@@ -326,3 +323,20 @@ void Cond::printAST(std::ostream &out) const  {
   void Chr::printAST(std::ostream &out) const {
         out<<"Chr(" << num << ")"; 
   }
+
+void ReadString::printAST(std::ostream &out) const {
+        out<<"ReadString("")";
+}
+
+void Strlen::printAST(std::ostream &out) const {
+        out<<"Strlen(" ")";
+}
+void StrCat::printAST(std::ostream &out) const {
+        out<<"StrCat(" ")";
+}
+void StrCmp::printAST(std::ostream &out) const {
+        out<<"StrCmp(" ")";
+}
+void StrCpy::printAST(std::ostream &out) const {
+        out<<"StrCpy(" ")";
+}

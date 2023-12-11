@@ -15,9 +15,14 @@ Function *AST::TheWriteInteger;
 Function *AST::TheWriteString;
 Function *AST::TheWriteChar;
 Function *AST::TheReadInteger;
+Function *AST::TheReadString;
 Function *AST::TheReadChar;
 Function *AST::TheAscii;
 Function *AST::TheChr;
+Function *AST::TheStrlen;
+Function *AST::TheStrCompare;
+Function *AST::TheStrCopy;
+Function *AST::TheStrCat;
 
 
 Type *AST::i8;

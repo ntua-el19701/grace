@@ -142,6 +142,16 @@ public:
         TheReadInteger =
         llvm::Function::Create(readInteger_type, llvm::Function::ExternalLinkage,
                        "readInteger", TheModule.get()); 
+     
+     /*readString*/
+     llvm::FunctionType *readString_type =
+        llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext),
+                            { i32, llvm::PointerType::get(i8, 0) }, false);
+        TheReadString =
+        llvm::Function::Create(readString_type, llvm::Function::ExternalLinkage,
+                       "readString", TheModule.get());
+     
+     
      /* readChar - lib.a */
     llvm::FunctionType *readCharacter_type =
         llvm::FunctionType::get(i8, false);
@@ -160,6 +170,32 @@ public:
         TheChr =
         llvm::Function::Create(chr_type, llvm::Function::ExternalLinkage,
                        "chr", TheModule.get());
+    
+    /* strlen - lib.a */
+    llvm::FunctionType *stringLength_type =
+        llvm::FunctionType::get(i32, { llvm::PointerType::get(i8, 0) }, false);
+        TheStrlen =
+        llvm::Function::Create(stringLength_type, llvm::Function::ExternalLinkage,
+                       "strlen", TheModule.get());
+    /* strcat - lib.a */
+        llvm::FunctionType *stringConcat_type =
+        llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), { llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0) }, false);
+        TheStrCat =
+        llvm::Function::Create(stringConcat_type, llvm::Function::ExternalLinkage,
+                       "strcatLib", TheModule.get());
+    /* strcpy - lib.a */
+        llvm::FunctionType *stringCopy_type =
+        llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), { llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0) }, false);
+        TheStrCopy =
+        llvm::Function::Create(stringCopy_type, llvm::Function::ExternalLinkage,
+                       "strcpyLib", TheModule.get());
+                  
+      /* strcmp - lib.a */
+      llvm::FunctionType *stringCompare_type =
+        llvm::FunctionType::get(i32, { llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0) }, false);
+        TheStrCompare =
+        llvm::Function::Create(stringCompare_type, llvm::Function::ExternalLinkage,
+                       "strcmpLib", TheModule.get());
 
     // Define and start the main function.      
     llvm::FunctionType *main_type = llvm::FunctionType::get(i32, {}, false);
@@ -214,8 +250,13 @@ protected:
   static Function *TheWriteChar;
   static Function *TheReadInteger;
   static Function *TheReadChar;
+  static Function *TheReadString;
   static Function *TheAscii;
-   static Function *TheChr;
+  static Function *TheChr;
+  static Function *TheStrlen;
+  static Function *TheStrCompare;
+  static Function *TheStrCopy;
+  static Function *TheStrCat;
 
   static Type *i8;
   static Type *i32;

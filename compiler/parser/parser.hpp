@@ -61,16 +61,21 @@
      T_writeChar = 276,
      T_writeString = 277,
      T_readInteger = 278,
-     T_readChar = 279,
-     T_ascii = 280,
-     T_chr = 281,
-     T_id = 282,
-     T_const_int = 283,
-     T_const_char = 284,
-     T_const_string = 285,
-     T_geq = 286,
-     T_leq = 287,
-     T_assign = 288
+     T_readString = 279,
+     T_readChar = 280,
+     T_ascii = 281,
+     T_chr = 282,
+     T_strlen = 283,
+     T_strcmp = 284,
+     T_strcpy = 285,
+     T_strcat = 286,
+     T_id = 287,
+     T_const_int = 288,
+     T_const_char = 289,
+     T_const_string = 290,
+     T_geq = 291,
+     T_leq = 292,
+     T_assign = 293
    };
 #endif
 
@@ -118,7 +123,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 122 "parser/parser.hpp"
+#line 127 "parser/parser.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
