@@ -1,6 +1,6 @@
 fun main () : nothing 
 
-   fun bsort (n : int;  x : int[]) : nothing
+   fun bsort (n : int;  ref x : int[]) : nothing
    
       fun swap (ref x, y : int) : nothing
          var t : int;
@@ -31,7 +31,7 @@ fun main () : nothing
       }
    } $ bsort
 
-   fun writeArray ( n : int;  x : int[]) : nothing
+   fun writeArray ( n : int; ref x : int[]) : nothing
       var i : int;
    {
       
@@ -47,7 +47,7 @@ fun main () : nothing
    
    var seed, i : int;
    var x       : int[16];
-   var arrris : int[0];
+  
    
 { $ main
    seed <- 65;

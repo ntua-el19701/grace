@@ -152,6 +152,7 @@ public:
     void printAST(std::ostream &out) const override;
     virtual void sem() override;
     virtual Value * compile() override;
+    virtual void preCompile() override;
 private:
     Expr *expr;
     Comma_expr_gen *comma_expr_gen;
@@ -163,6 +164,7 @@ public:
     Func_call_stmt(Id i, Expr *e = nullptr, Comma_expr_gen *c = nullptr) : id(i), expr(e), comma_expr_gen(c){}
     virtual void printAST(std::ostream &out) const override;
     virtual void sem() override;
+    virtual void preCompile() override;
     virtual Value * compile() override;
 private:
     Id id;
@@ -176,6 +178,7 @@ public:
     virtual void printAST(std::ostream &out) const override;
     virtual void sem() override;
     virtual Value * compile() override;
+    virtual void preCompile() override;
     virtual void arrayCheck() override;
       virtual char* getName() override {
         return nullptr;
@@ -408,6 +411,7 @@ public:
     virtual void printAST(std::ostream &out) const override ;
     virtual void sem() override;
     virtual Value * compile() override;
+    virtual void preCompile() override;
     virtual void arrayCheck() override;
     virtual char* getName() override;
 private:

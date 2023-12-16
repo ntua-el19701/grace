@@ -71,15 +71,16 @@ PR ({L}|{D}|[ ~!:@.#$%^&*\(\)_+\[\]\|\{\}])
 
 
 \"(\\.|[^"\\\n])*\"   { yylval.const_str = strdup(yytext); return T_const_string; } // for const string
-"$"[^\n\$]([^\n])*\n  {/* single line comments*/ lineno++;}
+"$"[^\n\$]([^\n])*[\n<<EOF>>]*  {/* single line comments*/ lineno++;}
 
 "$$"                  {BEGIN(COMMENT);} 
 <COMMENT>"$$"         {BEGIN(INITIAL);}
 <COMMENT>\n           {lineno++;}
+<COMMENT>"$"          {/*nothing*/}
 <COMMENT>[^\n"$$"]*   {/*nothing*/}
 <COMMENT><<EOF>>      { fprintf(stderr, "Unfinished comment at EOF\n"); exit(1); }
 
-\n    { lineno ++;}
+\n      { lineno ++;}
 
 {W}+    { /* return nothing */ }
 

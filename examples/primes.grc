@@ -35,7 +35,7 @@ fun main () : nothing
       counter <- counter + 1;
       writeString("3\n");
    }
-   number <- 6;
+   number <- 6; $this is a comment
    while number <= limit do {
       if prime(number - 1) = 1 then {
          counter <- counter + 1;

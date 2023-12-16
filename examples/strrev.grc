@@ -2,7 +2,7 @@ fun main () : nothing
 
    var r : char[20];
 
-   fun reverse (ref s,r : char[]) : nothing
+   fun reverse (ref s : char[]) : nothing
       var i, l : int;
    {
      
@@ -13,14 +13,16 @@ fun main () : nothing
          i <- i+1;
       }
       r[i] <- '\0';
-      
+
       
    }
 
-   var x:char[20];
+var x:char[20];
+
 { $ main
+
    x<-"ferrari";
-   reverse(x,r);
+   reverse(x);
    writeString(r);
 } $ main
 

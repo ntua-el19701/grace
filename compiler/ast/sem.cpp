@@ -5,6 +5,8 @@
 #include <stack>
 /// ERRORS TO DO :  READINTEGER, REF
 Typos prevType; // used for comma id gen
+bool prevRef;
+int prevAns;
 vector<int> functions; //vector that contains each return value of every function
 bool returned = false; //flag to check if function returns correctly
 bool idGenFlag = false; // if this is false then comma id gen inserts variable. else it inserts parameter
@@ -27,8 +29,14 @@ string keepidname;
 
 int dimensions_keep = -1;
 int func_counter = 0;
+int fun_counter=0;
 
 std::map < std::string,int > functions_exist;
+
+std::map <std::string, vector < int > > func_decl_params;
+std::map <std::string, vector < int > > function_params;
+
+std::vector < int > function_parameters; ///1 int , 2 char , 3 ref int , 4 ref char
 
 std::vector<ParameterEntry> vec;    /// used in HEADER, Fpar_def , Fpar_def_gen
 std::vector<ParameterEntry> fcallparams; // used for func_Call
@@ -67,6 +75,7 @@ void Cond::sem() {
 // ID : nam , Fpar_def = fp , Fpar_def_gen = fpg , Ret_type = r
 void Header::sem(){
     
+    function_parameters.clear();
     // vec contains PARAMETERS ( Type , name , arraysize)
     // Clear this Header parameters to add them again later
     while (!vec.empty()) // empty the vector that will contain possible parameters of the funtion
@@ -77,9 +86,13 @@ void Header::sem(){
     
     func_counter=1;
 
-    if(func_has_body){
-         functions_exist[nam.getName()]=1;
+   /* if(func_has_body){
+         functions_exist[nam.getName()]=2;
     }
+    else{
+        functions_exist[nam.getName()]=1; ///1 = func_decl
+    }
+    */
    
     // Function declaration without or with body , -100 = No body , 0 = Has Body
     if(func_has_body==false){
@@ -101,6 +114,29 @@ void Header::sem(){
     if(fpar_def_gen!= nullptr)
         fpar_def_gen->sem();
     
+
+    if(func_has_body==false){
+        func_decl_params[nam.getName()]=function_parameters;
+         functions_exist[nam.getName()]=1; 
+    }
+    else{
+    if(functions_exist[nam.getName()]==1){
+        std::vector < int > previus_params =  func_decl_params[nam.getName()];
+
+    if(previus_params.size()!=function_parameters.size()){
+        yyerror("Funcion Declaration and Defitition are not the same: ",nam.getName());
+    }
+        for(auto i=0;i<previus_params.size();i++){
+
+          
+            if(previus_params[i]!=function_parameters[i])
+                yyerror("Funcion Declaration and Defitition are not the same:",nam.getName());
+        }
+        }
+    functions_exist[nam.getName()]=2;
+
+    }
+
     // Function declaration with parameters at vec without or with body , 0 = No body , 1 = Has Body
     if(func_has_body==true){
         ft.insert(nam.getName(), vec,ret_type->getTypos(),1);
@@ -112,6 +148,7 @@ void Header::sem(){
 
   //  ft.printST();
    // st.printST();
+   
 }
 
 /*
@@ -122,6 +159,7 @@ void Header::sem(){
 // Func_def = header + local_def_gen + block
 void Func_def::sem(){
 
+    fun_counter++;
     // --------header-------
     func_has_body = true;
 
@@ -151,6 +189,15 @@ void Func_def::sem(){
     returned = false;      // set this to false (initialize it)
     st.closeScope();
     
+    fun_counter--;
+    if(fun_counter==0){
+         for(const auto& pair: functions_exist){
+        if(pair.second==1){
+            yyerror("Function Declared But Not Defined!",pair.first);
+        }
+         }
+    }
+
 }
 /*
     BLOCK
@@ -258,6 +305,9 @@ void Comma_id_gen::sem() {
         st.insert(name.getName(),prevType ,ENTRY_VARIABLE, array_dimension_counter); 
     }
     else{           ///comes from Fpar_def      
+
+        function_parameters.push_back(prevAns);
+
      // std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<prevType<<" Dimensions: "<<array_dimension_counter<<std::endl;
         vec.push_back(ParameterEntry(prevType, name.getName(), array_dimension_counter));
     }
@@ -287,7 +337,7 @@ void Assign::sem() {
     //std::cout<<"Expected Dimensions:"<<array_expected_dimension_size<<std::endl;
     //std::cout<<"Real Dimensions:"<<arr_dimension_size_counter<<std::endl;
 
-     if(functions_exist[l_value->getName()]==1){
+     if(functions_exist[l_value->getName()]!=0){
          yyerror("This is a function!!!!!",l_value->getName() );
      }
 
@@ -347,6 +397,7 @@ void L_value::sem(){
     else if(flag == 2){ ///comes only from px. x <- "hi";
 
         type = TYPE_char;
+        
         visited = true;
 
     }
@@ -419,9 +470,23 @@ void UnOp::sem(){
 void If::sem(){
     
     condition->check_type(TYPE_bool);
+    
+    bool if_returned=false;
+    bool else_returned=false;
+    
     if(stmt1!=nullptr)
         stmt1->sem();
-    if (stmt2 != nullptr) { stmt2->sem(); }
+
+    if_returned=returned;
+   
+    returned=false;
+    if (stmt2 != nullptr) { 
+        
+        stmt2->sem();
+        else_returned=returned;
+    }
+    if(if_returned && else_returned){ returned=true;}
+    else returned=false;
     
 
 }
@@ -467,18 +532,41 @@ void Fpar_def::sem(){
 
    array_dimension_counter=0;
    if(fpar_type->getArray() == 1){
+
+        if(ref==false){
+            yyerror("Array Must Be Reference",name.getName());
+        }
       array_dimension_counter = 1; // char[] or int[]
     }
+
+
     
     fpar_type->sem();
     
    // std::cout<<"NAME: "<<name.getName()<<" TYPE: "<<fpar_type->getType()<<" Dimensions: "<<array_dimension_counter<<std::endl;
-
+    
+    int ans=0;
+    if(fpar_type->getType()==0){
+        if(ref){
+            ans=3;
+        }
+        else
+        ans=1;
+    }
+    if(fpar_type->getType()==1){
+        if(ref){
+            ans=4;
+        }
+        else
+        ans=2;
+    }
+    function_parameters.push_back(ans);
     vec.push_back(ParameterEntry(fpar_type->getType(),name.getName(), array_dimension_counter));
  //   st.insert(name.getName(),fpar_type->getType(), ENTRY_PARAMETER, arraySize);
     
  // keep the type in order to insert the new parameter for each ,   
     prevType = fpar_type->getType();
+    prevAns=ans;
     if(comma_id_gen!=nullptr){
        idGenFlag = true;
        comma_id_gen->sem();
@@ -540,7 +628,7 @@ void Func_call_expr::sem(){
         fcallparams.pop_back();
     }
 
-    if( functions_exist[id.getName()]!=1)yyerror("Undefined Function !",id.getName());
+     if( functions_exist[id.getName()]==0)yyerror("Undefined Function !",id.getName());
    SymbolEntry *s = st.lookup(id.getName());
    if (s != nullptr){ 
    FunctionEntry *f = ft.lookup(id.getName());   // find if there is a function with this name
@@ -563,7 +651,8 @@ void Func_call_expr::sem(){
    constFlag = false;
 
    if(expr != nullptr){
-    expr->findType();
+   // expr->findType();
+    expr->sem();
 
     if(visited) dimensions_found++;  ///string
    
@@ -626,7 +715,8 @@ void Comma_expr_gen::sem(){
    constFlag = false;
 
    if(expr != nullptr){
-    expr->findType();
+    //expr->findType();
+    expr->sem();
 
     if(visited) dimensions_found++;  ///string
    
@@ -662,7 +752,7 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
         fcallparams.pop_back();
     }
 
-    if( functions_exist[id.getName()]!=1)yyerror("Undefined Function !",id.getName());
+    if( functions_exist[id.getName()]==0)yyerror("Undefined Function !",id.getName());
    SymbolEntry *s = st.lookup(id.getName());
    if (s != nullptr){ 
    FunctionEntry *f = ft.lookup(id.getName());   // find if there is a function with this name
@@ -685,7 +775,9 @@ void Func_call_stmt::sem(){  //DO I HAVE TO FETCH FUNC SCOPE?? HERE WE AREwhat h
    constFlag = false;
 
    if(expr != nullptr){
-    expr->findType();
+    //expr->findType();
+    
+    expr->sem();
 
     if(visited) dimensions_found++;  ///string
    
@@ -815,7 +907,7 @@ void Const_char::arrayCheck(){
     STRING CONST
 */
 void StringConst::sem() {
-   
+ 
     //type = TYPE_const_string;
     type = TYPE_char;
     array_dimension_counter++;

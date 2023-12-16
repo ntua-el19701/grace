@@ -6,7 +6,7 @@ fun help (ref n : int; xar:char) : int;
 fun hello () :nothing
     var x : int;
 {
-    x <- help(x,'z');
+    
 
 }
 
@@ -15,7 +15,7 @@ fun help(ref n : int;xar:char) : int{
 }
 var f:int;
 {
-    help(f,'e');
+   
     hello();
 }
 

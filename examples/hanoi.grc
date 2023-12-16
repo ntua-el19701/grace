@@ -2,20 +2,25 @@ fun solve () : nothing
 
    fun hanoi (rings : int; ref source, target, auxiliary : char[]) : nothing
 
-      fun move (ref source: char[]) : nothing
+     
+   fun move (ref source,target:char[]) : nothing
       {
-         writeString("Move from ");
+        writeString("Move from ");
          writeString(source);
          writeString(" to ");
-      
+         writeString(target);
          writeString(".\n");
       }
 
    { $ hanoi
       if rings >= 1 then {
-         $hanoi(rings-1, source, auxiliary, target);
-         move(source);
-         $hanoi(rings-1, auxiliary, target, source);
+         writeInteger(rings);
+        hanoi(rings-1, source, auxiliary, target);
+         move(source, target);
+             writeInteger(rings);
+         hanoi(rings-1, auxiliary, target, source);
+             writeInteger(rings);
+
       }
    } $ hanoi
 
@@ -28,5 +33,7 @@ fun solve () : nothing
    x1<-"left";
    x2<-"right";
    x3<-"middle";
-   hanoi(NumberOfRings, x1,x2,x3);
+   hanoi(NumberOfRings,"x1","left",x3);
+    hanoi(NumberOfRings,x1,"left",x3);
 } $ solve
+

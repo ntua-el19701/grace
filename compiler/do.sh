@@ -8,7 +8,7 @@ rm temp.s temp.ll
 a.out
 
 
-grace <../examples/ex2.grc>  temp.ll
+grace <../examples/wrongExamples/notArr.grc>  temp.ll
 llc -o temp.s temp.ll
 clang -o a.out temp.s libgrc.a -no-pie
 rm temp.s temp.ll
@@ -81,7 +81,7 @@ clang -o a.out temp.s libgrc.a -no-pie
 rm temp.s temp.ll
 a.out
 
-grace <../examples/error.grc>  temp.ll
+grace <../examples/func_decl.grc>  temp.ll
 llc -o temp.s temp.ll
 clang -o a.out temp.s libgrc.a -no-pie
 rm temp.s temp.ll

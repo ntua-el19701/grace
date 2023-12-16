@@ -2,8 +2,11 @@
 fun main() : nothing
   var arr:int[10];
   var x,y:char[10];
-{ $ main
-   arr[1]<-strlen(x);
-   writeString(x);
+  fun aris(ref c,v: char[]):nothing{
 
+   
+  }
+{ $ main
+
+  aris("abc","aaaaaa");
 } $ main

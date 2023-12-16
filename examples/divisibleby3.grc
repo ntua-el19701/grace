@@ -1,3 +1,11 @@
+$$
+  In this test grace program three functions that use one another will be
+  declared and then later defined. Also a stress-test of the scopes of variables
+  takes place.
+
+  The functions 'mod3isX' are using one another recursively. Also the name 'n'
+  is the only variable/parameter name in the whole program.
+$$
 
 fun main() : nothing
   var n : int;
@@ -35,7 +43,7 @@ fun main() : nothing
 
 
 { $ main
-  n <-readInteger();
+  n <- 54;
   writeInteger(n);
   writeString(" is ");
   if divisibleBy3(n) # 1 then

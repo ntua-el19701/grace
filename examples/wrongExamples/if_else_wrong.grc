@@ -3,11 +3,13 @@ fun main() : nothing
   var x : int;
 
   fun min(a, b : int) : int {
+    return a;
     if a < b then
       return a;
     else
+      a <- 3;
       $ should return b
-      return;
+      return a;
   }
 
 { $ main

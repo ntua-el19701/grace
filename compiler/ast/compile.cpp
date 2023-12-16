@@ -32,6 +32,13 @@ Typos keepheadertype;
 Value* arrayAllocationInt = nullptr;
 Value* arrayAllocationChar = nullptr;
 Value* arrayAllocationArray = nullptr;
+
+std::map < std::string , Value * > arrayAllocationArraymap;
+std::map < std::string , Value * > arrayAllocationCharmap;
+std::map < std::string , Value * > arrayAllocationIntmap;
+
+std::map < std::string , Value * > array_ending;
+
 int int_references_counter=0;
 int char_references_counter=0;
 int array_references_counter=0;
@@ -172,6 +179,9 @@ Value * Func_def::compile (){
     */
 
     active_fun = find_parents(active_fun);
+    arrayAllocationArray=arrayAllocationArraymap[active_fun];
+    arrayAllocationChar=arrayAllocationCharmap[active_fun];
+    arrayAllocationInt=arrayAllocationIntmap[active_fun];
     activeBB = pattern.top();
     Builder.SetInsertPoint(activeBB);
     pattern.pop();
@@ -269,14 +279,17 @@ Value * Header::compile() {
     if(int_references_counter != 0){
         
         arrayAllocationInt = Builder.CreateAlloca(ArrayType::get(intPointerType, int_references_counter), nullptr,"ArrayIntPointers");
+        arrayAllocationIntmap[active_fun]=arrayAllocationInt;
     }
     if(char_references_counter!=0){
        
         arrayAllocationChar = Builder.CreateAlloca(ArrayType::get(charPointerType, char_references_counter), nullptr,"ArrayCharPointers");
+        arrayAllocationCharmap[active_fun]=arrayAllocationChar;
     }
     if(array_references_counter!=0){
        
         arrayAllocationArray = Builder.CreateAlloca(ArrayType::get(intType, array_references_counter), nullptr,"ArrayPointers");
+        arrayAllocationArraymap[active_fun]=arrayAllocationArray;
     }
 
     int int_pos=0;
@@ -643,10 +656,13 @@ Value * L_value::compile(){
 
         std::string name=id.getName();
         std::string var_name = active_fun + "-" + name;
-
-       /* if((vars[var_name]==0)){
-            std::cout<<var_name;
-        }*/
+        std::string new_active_fun=active_fun;
+        while((vars[var_name]==0)&&(maparraychar[var_name]==0)&&(maparrayint[var_name]==0)){
+            
+            new_active_fun = find_parents(new_active_fun);
+            var_name=new_active_fun+"-"+name;
+             
+        }
 
 
 
@@ -746,8 +762,7 @@ Value * L_value::compile(){
 
          }
 
-      
-
+    
 
     } ///END OF ARRAYS
     else
@@ -864,11 +879,43 @@ Value * Assign::compile(){
             Value * new_pos = Builder.CreateAdd(pos, word_value, "addtmpString");
             Value * last_pointer = Builder.CreateGEP(charpointerType, TheVarsChar, new_pos, "Stringpointer");
             Builder.CreateStore(character, last_pointer);
+            
+            if(word[i]=='`'){
+                std::string name = l_value->getName();
+                 std::string var_name = active_fun + "-" + name;
+
+                std::string new_active_fun=active_fun;
+
+                while((vars[var_name]==0)&&(maparraychar[var_name]==0)&&(maparrayint[var_name]==0)){
+            
+                 new_active_fun = find_parents(new_active_fun);
+                 var_name=new_active_fun+"-"+name;
+
+                 }
+                array_ending[var_name]=last_pointer;
+            }
                  
         }
 
 
          
+    }
+
+    if(zero_found==true){
+        
+           std::string name = l_value->getName();
+                 std::string var_name = active_fun + "-" + name;
+
+                std::string new_active_fun=active_fun;
+
+                while((vars[var_name]==0)&&(maparraychar[var_name]==0)&&(maparrayint[var_name]==0)){
+            
+                 new_active_fun = find_parents(new_active_fun);
+                 var_name=new_active_fun+"-"+name;
+
+                 }
+                array_ending[var_name]=lhs;
+                zero_found=false;
     }
     word_size=0;
 
@@ -905,18 +952,29 @@ Value * Func_call_stmt::compile(){
             int flag=0; 
            
             std::string var_name=active_fun + "-" + expr->getName();
+           
+            bool reff=false;
+            for(const auto& pair: reference_position){
+            if(pair.first==var_name){
+                reff=true;
+            }
+             }
+
 
 
             if(array_ref[header_name][position]==true){
-
-                 if(reference_position[var_name]!=0){ //////////////ARRAY IS REFERENCE WRONGGGGGGGGGGGGGGGGGGG
+                
+                 if(reff){ //////////////ARRAY IS REFERENCE WRONGGGGGGGGGGGGGGGGGGG
                     int pos=reference_position[var_name];
-                              Type * intType = Type::getInt32Ty(TheContext);
-                             Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArray,c32(pos),"pointerArray");
+                            Type * intType = Type::getInt32Ty(TheContext);
+                            Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArray,c32(pos),"pointerArraytesting");
                             Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
                             params.push_back(v);
+                            flag=1;
                  }
                 else{
+                    
+                    
             int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
             pair < int , int > possible_array;
             if(var_type==0){ ///INT
@@ -952,6 +1010,7 @@ Value * Func_call_stmt::compile(){
                 }
             }
             }
+            }
 
                     /// Variable Reference
             if(flag==0){
@@ -963,7 +1022,7 @@ Value * Func_call_stmt::compile(){
             
             is_assign=false;
             }
-            }
+            //}
         
         
         }
@@ -1055,25 +1114,50 @@ Value * Comma_expr_gen::compile(){
          params.push_back(v);
         }
         
-        else{                               ///PARAMETER REFERENCE OR ARRAY 
+        else{                               ///PARAMETER REFERENCE OR ARRAY
+            
+
+
             int flag=0; 
+           
             std::string var_name=active_fun + "-" + expr->getName();
+           
+            bool reff=false;
+            for(const auto& pair: reference_position){
+            if(pair.first==var_name){
+                reff=true;
+            }
+             }
 
 
-             if(array_ref[header_name][position]==true){
+
+            if(array_ref[header_name][position]==true){
+                
+                 if(reff){ //////////////ARRAY IS REFERENCE WRONGGGGGGGGGGGGGGGGGGG
+                    int pos=reference_position[var_name];
+                            Type * intType = Type::getInt32Ty(TheContext);
+                            Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArray,c32(pos),"pointerArraytesting");
+                            Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
+                            params.push_back(v);
+                            flag=1;
+                 }
+                else{
+                    
+                    
             int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
             pair < int , int > possible_array;
             if(var_type==0){ ///INT
                 possible_array=find_array(var_name,true);
-               
+        
 
                 if(possible_array.first==-1){
                     flag=0;
                 }
                 else{
+             
                     flag=1;
 
-                    v = c32(possible_array.first);
+                    v = c32(possible_array.first);//////////IF REF
                      params.push_back(v);
 
                 }
@@ -1089,13 +1173,15 @@ Value * Comma_expr_gen::compile(){
                     flag=1;
 
                     v = c32(possible_array.first);
-                     params.push_back(v);
+                    params.push_back(v);
+
 
                 }
             }
-            
-             }
-                 /// Variable Reference
+            }
+            }
+
+                    /// Variable Reference
             if(flag==0){
             is_assign=true;
                 std::string var_name=active_fun + "-" + expr->getName();
@@ -1105,6 +1191,7 @@ Value * Comma_expr_gen::compile(){
             
             is_assign=false;
             }
+            //}
         
         
         }
@@ -1248,22 +1335,50 @@ Value * Func_call_expr::compile(){
          params.push_back(v);
         }
         
-        else{                               ///PARAMETER REFERENCE OR ARRAY 
-            int flag=0; 
-            std::string var_name=active_fun + "-" + expr->getName();
+        else{                               ///PARAMETER REFERENCE OR ARRAY
+            
 
+
+            int flag=0; 
+           
+            std::string var_name=active_fun + "-" + expr->getName();
+           
+            bool reff=false;
+            for(const auto& pair: reference_position){
+            if(pair.first==var_name){
+                reff=true;
+            }
+             }
+
+
+
+            if(array_ref[header_name][position]==true){
+                
+                 if(reff){ //////////////ARRAY IS REFERENCE WRONGGGGGGGGGGGGGGGGGGG
+                    int pos=reference_position[var_name];
+                            Type * intType = Type::getInt32Ty(TheContext);
+                            Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArray,c32(pos),"pointerArraytesting");
+                            Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
+                            params.push_back(v);
+                            flag=1;
+                 }
+                else{
+                    
+                    
             int var_type = vartype[var_name]; ///ID is INTEGER OR CHAR
             pair < int , int > possible_array;
             if(var_type==0){ ///INT
                 possible_array=find_array(var_name,true);
+        
 
                 if(possible_array.first==-1){
                     flag=0;
                 }
                 else{
+             
                     flag=1;
 
-                    v = c32(possible_array.first);
+                    v = c32(possible_array.first);//////////IF REF
                      params.push_back(v);
 
                 }
@@ -1279,13 +1394,15 @@ Value * Func_call_expr::compile(){
                     flag=1;
 
                     v = c32(possible_array.first);
-                     params.push_back(v);
+                    params.push_back(v);
+
 
                 }
             }
-            
+            }
+            }
 
-                  /// Variable Reference
+                    /// Variable Reference
             if(flag==0){
             is_assign=true;
                 std::string var_name=active_fun + "-" + expr->getName();
@@ -1295,6 +1412,7 @@ Value * Func_call_expr::compile(){
             
             is_assign=false;
             }
+            //}
         
         
         }
@@ -1426,6 +1544,17 @@ Value * Id::compile(){
     
     std::string var_name = active_fun + "-" + name;
 
+    std::string new_active_fun=active_fun;
+
+    while((vars[var_name]==0)&&(maparraychar[var_name]==0)&&(maparrayint[var_name]==0)){
+            
+        new_active_fun = find_parents(new_active_fun);
+        var_name=new_active_fun+"-"+name;
+
+    }
+
+    
+
 
     // Return Value of  Variable for assign
 
@@ -1545,6 +1674,7 @@ Value * Const_char::compile() {
     if((str[1]=='\\')&&(str[2]=='0')){
         zero_found=true;
         str[1]='`';
+        //return c8('\0');
     }
     return c8(str[1]);
 }
@@ -1575,6 +1705,14 @@ Value * Write_String::compile(){
 
           std::string var_name = active_fun + "-" + id.getName();
 
+           std::string new_active_fun=active_fun;
+            while((vars[var_name]==0)&&(maparraychar[var_name]==0)&&(maparrayint[var_name]==0)){
+            
+                new_active_fun = find_parents(new_active_fun);
+                var_name=new_active_fun+"-"+id.getName();
+
+            }
+
           pair < int , int > possible_array;
           possible_array = find_array(var_name,false) ;
           int pos=possible_array.first;
@@ -1582,6 +1720,7 @@ Value * Write_String::compile(){
           if(pos!=-1){ ///THIS IS NOT REFERENCE ARRAY
           int sizes=word_length[var_name];
           
+      
       
 
         for(auto i=0 ; i<sizes;i++){
@@ -1591,11 +1730,16 @@ Value * Write_String::compile(){
             Value * v = Builder.CreateGEP(pointerType, TheVarsChar, c32(new_pos), "load");
             Value * result =  Builder.CreateLoad(Type::getInt8Ty(TheContext), v, "load");
 
-            
-            
             Builder.CreateCall(TheWriteChar, {result});
+
+            if(v==array_ending[var_name]){
+               // std::cout<<i; ARRAY ENDINGGGGGGGGGGGG
+                break;
+            }
         }
         }
+
+
         else{ ///THIS IS REFERENCE ARRAY
 
    
@@ -1612,7 +1756,7 @@ Value * Write_String::compile(){
           if(sizes==0) sizes=200;
           
       
-
+        
         for(auto i=0 ; i<sizes;i++){
             
             
@@ -1637,7 +1781,15 @@ Value * Write_String::compile(){
 
              Builder.CreateCall(TheWriteChar, {result});
         }
-
+        
+        
+       /*
+            Value * new_pos = v;
+            llvm::PointerType* pointerType = TheVarsChar->getType();
+            Value * result_ptr = Builder.CreateGEP(pointerType, TheVarsChar, new_pos, "load");
+            
+            Builder.CreateCall(TheWriteString, {result_ptr});
+        */
 
         }
 

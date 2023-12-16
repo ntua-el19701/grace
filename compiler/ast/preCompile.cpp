@@ -24,6 +24,9 @@ int array_size=-1;
 int array_int_size=0;
 int array_char_size=0;
 
+int string_counter=0;
+int string_size=0;
+
 
 string prev_fun="emptyfun"; ///keep the previus function
 
@@ -167,8 +170,38 @@ void Var_def::preCompile(){
 }
 
 void Block::preCompile(){
-    
+    for (Stmt *s : stmt_list) s->preCompile();
    
+}
+
+void L_value::preCompile(){
+    if(flag==2){
+        string_counter++;
+        std::string name  = const_string.getStr();
+        int ch = name.size();
+        
+        string_size+=ch-2; //remove " "
+    }
+}
+
+void Func_call_stmt::preCompile(){
+   if(expr!=nullptr)
+    expr->preCompile();
+   if(comma_expr_gen!=nullptr)comma_expr_gen->preCompile();
+
+
+}
+
+void Func_call_expr::preCompile(){
+   if(expr!=nullptr)
+     expr->preCompile();
+   if(comma_expr_gen!=nullptr)comma_expr_gen->preCompile();
+}
+
+void Comma_expr_gen::preCompile(){
+   
+   expr->preCompile();
+   if(comma_expr_gen!=nullptr)comma_expr_gen->preCompile();
 }
 
 void Func_decl::preCompile(){
@@ -188,6 +221,7 @@ void Func_def::preCompile (){
     if(prev_fun=="emptyfun"){
       //  printThis();
       ///FILL word_length
+      //std::cout<<string_counter<<" "<<string_size;
        for(const auto& pair: maparraychar){
         word_length[pair.first]=pair.second;
         }
