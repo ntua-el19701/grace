@@ -1,21 +1,21 @@
 fun main () : nothing
 
-fun help (n : int) : int;
+fun help (ref n : int; xar:char) : int;
 
 
 fun hello () :nothing
     var x : int;
 {
-    x <- help(0);
+    
 
 }
 
-fun help(n : int) : int{
+fun help(ref n : int;xar:char) : int{
     return 1;
 }
-
+var f:int;
 {
-    help(1);
+   
     hello();
 }
 

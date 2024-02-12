@@ -1,0 +1,29 @@
+fun main():nothing
+
+
+var array: int[10];
+var pin:int[10];
+var t,arrchar:char [15];
+
+var za,zz:char;
+var f:int;
+
+fun aris(  s:int[] ; s2:int): int
+ var ilias : int;
+ var fofos :int[10];
+ {
+
+  fofos[3]<-8;
+  s[5]<- 7;
+  aris(fofos,s[ilias]); $IS BROKEN
+  
+   
+  return 7;
+
+}
+var o:int;
+{
+aris(array,pin[3]);
+    
+  
+}

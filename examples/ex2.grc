@@ -1,0 +1,15 @@
+$$
+this is a progamasa 
+$$
+fun main () : nothing
+
+var r:char[20];
+ {
+
+   r<-"abc";
+   writeString(r);
+  
+
+   r<-"b";
+   writeString(r);
+ }

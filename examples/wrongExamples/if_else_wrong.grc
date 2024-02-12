@@ -1,0 +1,20 @@
+
+fun main() : nothing
+  var x : int;
+
+  fun min(a, b : int) : int {
+    return a;
+    if a < b then
+      return a;
+    else
+      a <- 3;
+      $ should return b
+      return a;
+  }
+
+{ $ main
+  writeString("Give a number from 1 to 100: ");
+  x <- readInteger();
+  if min(1, x) = 1 and min(x, 100) = x then
+    writeString("Thank for your cooperation. See you later!\n");
+} $ main

@@ -46,6 +46,23 @@
         "xtr1common": "cpp",
         "xutility": "cpp",
         "map": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "charconv": "cpp",
+        "format": "cpp",
+        "locale": "cpp",
+        "mutex": "cpp",
+        "ratio": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp",
+        "xlocbuf": "cpp",
+        "xlocmes": "cpp",
+        "xlocmon": "cpp",
+        "xloctime": "cpp",
+        "fstream": "cpp",
+        "stack": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "ranges": "cpp",
+        "span": "cpp"
     }
 }

@@ -1,0 +1,18 @@
+
+
+fun main() : nothing
+  var number : int;
+    var answer : char;
+  var q : int[12];
+  fun isZero(ref x : int[]) : char {
+  return 'y';
+  }
+
+{
+  number <- -4;
+  answer <- isZero(q);
+  if answer = 'y' then writeString("Number is zero.\n");
+  else                 writeString("Number is non-zero.\n");
+
+ 
+}

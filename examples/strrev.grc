@@ -2,24 +2,27 @@ fun main () : nothing
 
    var r : char[20];
 
- 
    fun reverse (ref s : char[]) : nothing
-      var i, l : int; 
+      var i, l : int;
    {
      
-      l <- 2; $strlen(s);
+      l <- 7;
       i <- 0;
-      while i < l do 
-      {
+      while i < l do {
          r[i] <- s[l-i-1];
          i <- i+1;
       }
-      r[i] <- '0';
-        
+      r[i] <- '\0';
+
+      
    }
-   
+
+var x:char[20];
+
 { $ main
-   reverse("hello");
+
+   x<-"ferrari";
+   reverse(x);
    writeString(r);
 } $ main
 

@@ -1,8 +1,12 @@
-fun main() : nothing
 
-fun a () : nothing
-var x : int[2];
-{
-    x[3] <-3;
-}
-{}
+fun main() : nothing
+  var arr:int[10];
+  var x,y:char[10];
+  fun aris(ref c,v: char[]):nothing{
+
+   
+  }
+{ $ main
+
+  aris("abc","aaaaaa");
+} $ main
