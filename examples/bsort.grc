@@ -42,7 +42,7 @@ fun main () : nothing
    
    var seed, i : int;
    var x       : int[16];
-   var w,vic : char[7];
+   var w,q : char[20];
    
 { $ main
    seed <- 65;
@@ -52,9 +52,10 @@ fun main () : nothing
       x[i] <- seed;
       i <- i+1;
    }
-   w<-"test";
-   vic <- "aaab";
+   w<-"Initial Array: ";
+  
    writeArray(w, 16, x);
-   $bsort(16, x);
-   writeArray(w, 16, x);
+   bsort(16, x);
+   q <- "Sorted Array: ";
+   writeArray(q, 16, x);
 } $ main
