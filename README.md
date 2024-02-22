@@ -1,4 +1,8 @@
 # Compiler for the programming language Grace
+Team 34: <br>
+Βασίλης Παπαδόπουλος, 03119701 <br>
+Αριστείδης Τζιαπούρας, 03119703
+
 After cloning the code, you should run:
 cd compiler <br>
 make <br>
