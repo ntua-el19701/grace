@@ -1,17 +1,16 @@
-fun main () : nothing 
+fun main () : nothing
 
-   fun bsort (n : int;  ref x : int[]) : nothing
+   fun bsort (n : int; ref x : int[]) : nothing
    
       fun swap (ref x, y : int) : nothing
          var t : int;
       {
-         t <- x+3;
+         t <- x;
          x <- y;
          y <- t;
       }
    
       var changed, i : int;
-      var d1,d2 :int;
       
    { $ bsort
       changed <- 1;
@@ -20,34 +19,30 @@ fun main () : nothing
          i <- 0;
          while i < n-1 do {
             if x[i] > x[i+1] then {
-               d1<-x[i];
-               d2<-x[i+1];
                swap(x[i], x[i+1]);
-              
                changed <- 1;
-            } 
+            }
             i <- i+1;
          }
       }
    } $ bsort
 
-   fun writeArray ( n : int; ref x : int[]) : nothing
+   fun writeArray (ref msg : char[]; n : int; ref x : int[]) : nothing
       var i : int;
    {
-      
+      writeString(msg);
       i <- 0;
       while i < n do {
          if i > 0 then writeString(", ");
          writeInteger(x[i]);
          i <- i+1;
-         
       }
       writeString("\n");
    }
    
    var seed, i : int;
    var x       : int[16];
-  
+   var w,vic : char[7];
    
 { $ main
    seed <- 65;
@@ -56,16 +51,10 @@ fun main () : nothing
       seed <- (seed * 137 + 221 + i) mod 101;
       x[i] <- seed;
       i <- i+1;
-   } 
-    i <- 0;
-   while i < 16 do {
-     writeInteger(x[i]);
-     writeString(", ");
-
-      i <- i+1;
-   } 
-   
-   writeArray(16, x);
-   bsort(16, x);
-   writeArray(16, x);
+   }
+   w<-"test";
+   vic <- "aaab";
+   writeArray(w, 16, x);
+   $bsort(16, x);
+   writeArray(w, 16, x);
 } $ main

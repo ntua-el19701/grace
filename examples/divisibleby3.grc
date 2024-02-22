@@ -43,7 +43,7 @@ fun main() : nothing
 
 
 { $ main
-  n <- 54;
+  n <- readInteger();
   writeInteger(n);
   writeString(" is ");
   if divisibleBy3(n) # 1 then

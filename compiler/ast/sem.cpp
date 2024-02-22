@@ -49,6 +49,8 @@ extern int lineno;
 void Compare::sem() {
     expr1->findType();
     expr2->findType();
+
+   // std::cout<<expr1->type<<" "<<expr2->type<<std::endl;
     if(expr1->type != expr2->type) yyerror("Type Mismatch");
     type = TYPE_bool;
     
@@ -937,5 +939,5 @@ void StrCat::sem(){
    
 }
 void StrCpy::sem(){
-    
+
 }

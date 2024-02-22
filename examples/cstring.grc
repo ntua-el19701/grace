@@ -1,6 +1,6 @@
 fun main() : nothing
 var a : char[20];
-    fun peos(c : char[]) : char
+    fun a(c : char[]) : char
     {
         a <- "abc";
         return c;

@@ -1,0 +1,36 @@
+fun check () : nothing
+
+fun test(j,k:int ; ref c:char[]):nothing
+    
+    fun test2(ref c:char[]):nothing
+    
+        var f:int;
+    {
+
+   f<-strlen(c);
+  
+    writeInteger(f);
+        
+    }
+    var f:int;
+{
+
+   f<-strlen(c);
+   test2(c);
+    writeInteger(f);
+    writeString(c);
+  
+    
+
+}
+
+var x,y : char[10];
+var c : int;
+var z : char;
+var a : int[10];
+var b : int;
+{
+    x <- "abcde";
+    writeInteger(strlen(x));
+   test(3,b,x);
+}
