@@ -1,4 +1,0 @@
-fun main() : nothing
-    fun swap() : nothing
-
-    
