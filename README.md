@@ -1,1 +1,1 @@
-# Compailer for the Programming Language Grace
+# Compiler for the Programming Language Grace
