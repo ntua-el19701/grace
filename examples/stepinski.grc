@@ -65,7 +65,7 @@ fun main(): nothing
     $$
     $ Function to apply Rule 90 cellular automaton to a row of characters.
     $$
-    fun rule_90(ref ev: char[];ss : int): nothing
+    fun rule_90(ref ev: char[]): nothing
 
       $$
       $ Helper function to check if the input character is '*'.
@@ -89,24 +89,27 @@ fun main(): nothing
           return 0;
       } $ xor
 
-      var l, i: int;
+      var l, i, j: int;
       var s: int[2];
       var cp: char[129];
 
     { $ rule_90
       i <- 0;
-      l <- ss;
-      writeInteger(l);
-      
+      l <- strlen(ev);
+      $ strcpy(cp, ev);
+      while (j<l) do{
+        cp[j]<-ev[j];
+        j<-j+1;
+      }
 
       while i < l do {
         if i - 1 < 0 then
           s[0] <- 0;
         else
-          s[0] <- is_star(ev[i-1]);
+          s[0] <- is_star(cp[i-1]);
 
         if i + 1 < l then
-          s[1] <- is_star(ev[i+1]);
+          s[1] <- is_star(cp[i+1]);
         else
           s[1] <- 0;
 
@@ -160,7 +163,7 @@ fun main(): nothing
 
     i <- 0;
     while i < l div 2 - 1 do {
-      rule_90(row,l);
+      rule_90(row);
       writeString(row);
       writeChar('\n');
       i <- i + 1;

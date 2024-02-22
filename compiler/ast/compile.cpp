@@ -32,8 +32,10 @@ Typos keepheadertype;
 Value* arrayAllocationInt = nullptr;
 Value* arrayAllocationChar = nullptr;
 Value* arrayAllocationArray = nullptr;
+Value* arrayAllocationArraySizes = nullptr;
 
 std::map < std::string , Value * > arrayAllocationArraymap;
+std::map < std::string , Value * > arrayAllocationArraySizesmap;
 std::map < std::string , Value * > arrayAllocationCharmap;
 std::map < std::string , Value * > arrayAllocationIntmap;
 
@@ -48,7 +50,13 @@ std::vector < std::string > args_name; ///name of parameters in the function
 std::vector < bool > args_array; ///name of parameters in the function
 std::vector < llvm:: Value * > params; /// parameters to call a function
 
+std::vector < int > array_sizes;
+
+std::stack < vector < int > > keep_array_sizes;
+
 std::map < std::string , int > array_is_ref;
+std::stack < vector < std::string > > active_arguments_names;
+
 
 std::map < std::string , std::vector < bool > > func_ref;
 std::map < std::string , std::vector < bool > > array_ref;
@@ -181,6 +189,7 @@ Value * Func_def::compile (){
     active_fun = find_parents(active_fun);
     arrayAllocationArray=arrayAllocationArraymap[active_fun];
     arrayAllocationChar=arrayAllocationCharmap[active_fun];
+    arrayAllocationArraySizes=arrayAllocationArraySizesmap[active_fun];
     arrayAllocationInt=arrayAllocationIntmap[active_fun];
     activeBB = pattern.top();
     Builder.SetInsertPoint(activeBB);
@@ -270,6 +279,8 @@ Value * Header::compile() {
 
     func_ref[name]=args_ref;
     array_ref[name]=args_array;
+
+  
    
     Type * intPointerType = Type::getInt32PtrTy(TheContext);
     Type * charPointerType = Type::getInt8PtrTy(TheContext);    
@@ -290,11 +301,21 @@ Value * Header::compile() {
        
         arrayAllocationArray = Builder.CreateAlloca(ArrayType::get(intType, array_references_counter), nullptr,"ArrayPointers");
         arrayAllocationArraymap[active_fun]=arrayAllocationArray;
+
+        arrayAllocationArraySizes = Builder.CreateAlloca(ArrayType::get(intType, array_references_counter), nullptr,"ArrayPointers");
+        arrayAllocationArraySizesmap[active_fun]=arrayAllocationArraySizes;
+
+
     }
 
     int int_pos=0;
     int char_pos=0;
     int array_pos=0;
+
+    //active_arguments_names.push(args_name);
+     //for(auto i=0;i<args_name.size();i++){
+     //   std::cout<<args_name[i]<<" ";
+    // }
 
     for(auto i=0;i<args_name.size();i++){
         
@@ -314,6 +335,11 @@ Value * Header::compile() {
                 Value * pointer = Builder.CreateGEP(intType,arrayAllocationArray,c32(array_pos),"Int32");
                 Builder.CreateStore(rhs,pointer);
                 reference_position[var_name]=array_pos;
+
+                Value * pointerSize = Builder.CreateGEP(intType,arrayAllocationArraySizes,c32(array_pos),"Int32");
+                Value * emptyint = c32(0);
+                Builder.CreateStore(emptyint,pointerSize);
+
                 array_pos++;
 
                
@@ -325,6 +351,12 @@ Value * Header::compile() {
                 Value * pointer = Builder.CreateGEP(intType,arrayAllocationArray,c32(array_pos),"Int32");
                 Builder.CreateStore(rhs,pointer);
                 reference_position[var_name]=array_pos;
+
+                Value * pointerSize = Builder.CreateGEP(intType,arrayAllocationArraySizes,c32(array_pos),"Int32");
+                Value * new_rhs =  activefunction->getArg(i+1);
+                i=i+1;
+                Builder.CreateStore(new_rhs,pointerSize);
+
                 array_pos++;
             }
 
@@ -381,8 +413,11 @@ Value * Header::compile() {
 
 
     }
+
+   
+
     }
-    else{
+    else{               ///FUNCTION DECLARATION
     std::string name = nam.getName();
     active_fun=name;        //Name of active function
 
@@ -421,7 +456,9 @@ Value * Header::compile() {
    
     declared_function[active_fun]=function;
 
-     func_ref[name]=args_ref;
+    func_ref[name]=args_ref;
+    array_ref[name]=args_array;
+    
 
     }
 
@@ -532,15 +569,23 @@ Value * Comma_id_gen::compile(){
     else
     if((is_integer==false)&&(array_variable)){                ///ARRAY CHAR
 
-        array_variable=true;
+         array_variable=true;
         args_ref.push_back(true);
         args.push_back(i32); // Number ?
+        args.push_back(i32); ///THIS IS THE SIZE
         args_counter+=1;
+          args_counter+=1;  ///THIS IS FOR THE SIZE
         args_name.push_back(par_name);
         args_array.push_back(true);
+
+        args_name.push_back(par_name+"_size"); ///THIS IS THE SIZE NAME
+        args_array.push_back(false); ///THIS IS FOR THE SIZE NAME
+        args_ref.push_back(false);
+
         array_is_ref[par_name]=1;
         array_references_counter++;
     }
+     
     
 
 
@@ -604,9 +649,16 @@ Value * Fpar_def::compile(){
         array_variable=true;
         args_ref.push_back(true);
         args.push_back(i32); // Number ?
+        args.push_back(i32); ///THIS IS THE SIZE
         args_counter+=1;
+        args_counter+=1;  ///THIS IS FOR THE SIZE
         args_name.push_back(par_name);
         args_array.push_back(true);
+
+        args_name.push_back(par_name+"_size"); ///THIS IS THE SIZE NAME
+        args_array.push_back(false); ///THIS IS FOR THE SIZE NAME
+         args_ref.push_back(false);
+
         array_is_ref[par_name]=1;
         array_references_counter++;
   
@@ -663,8 +715,6 @@ Value * L_value::compile(){
             var_name=new_active_fun+"-"+name;
              
         }
-
-
 
          int var_type = vartype[var_name];
          int var_pos = vars[var_name];
@@ -828,8 +878,7 @@ Value * L_value::compile(){
             word+=get_word[i];
             word_size++;
         }
-        word+='`';
-        word_size++;
+        
 
        return nullptr;
 
@@ -925,6 +974,10 @@ Value * Assign::compile(){
 Value * Func_call_stmt::compile(){
    
     Value *v;
+
+    array_sizes.clear();
+
+    int size_of_array_char=0;
     
     
     
@@ -943,6 +996,7 @@ Value * Func_call_stmt::compile(){
 
          v = expr->compile();
          params.push_back(v);
+         array_sizes.push_back(0);
         }
         
         else{                               ///PARAMETER REFERENCE OR ARRAY
@@ -963,7 +1017,7 @@ Value * Func_call_stmt::compile(){
 
 
             if(array_ref[header_name][position]==true){
-                
+          
                  if(reff){ //////////////ARRAY IS REFERENCE WRONGGGGGGGGGGGGGGGGGGG
                     int pos=reference_position[var_name];
                             Type * intType = Type::getInt32Ty(TheContext);
@@ -971,6 +1025,17 @@ Value * Func_call_stmt::compile(){
                             Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
                             params.push_back(v);
                             flag=1;
+
+                    int var_type = vartype[var_name];
+                    if(var_type==1){ ///CHAR
+
+                     Type * intType = Type::getInt32Ty(TheContext);
+                            Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArraySizes,c32(pos),"pointerArraytesting");
+                            Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
+                            params.push_back(v);
+                            position++;
+
+                    }
                  }
                 else{
                     
@@ -987,6 +1052,18 @@ Value * Func_call_stmt::compile(){
                 else{
              
                     flag=1;
+                    
+
+                    /*
+                    for(const auto& pair: maparrayint){
+                    //std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+ 
+                    if(pair.first==var_name){
+                          array_sizes.push_back(pair.second);
+                    }
+                    }
+                    */
+
 
                     v = c32(possible_array.first);//////////IF REF
                      params.push_back(v);
@@ -1001,11 +1078,22 @@ Value * Func_call_stmt::compile(){
                     flag=0;
                 }
                 else{
+                   
                     flag=1;
-
+                    
+                    for(const auto& pair: maparraychar){
+                    //std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+                   
+                    if(pair.first==var_name){
+                          size_of_array_char=pair.second;
+                    }
+                    }
+                    
                     v = c32(possible_array.first);
                     params.push_back(v);
-
+                    params.push_back(c32(size_of_array_char));
+                    position++;
+                 
 
                 }
             }
@@ -1014,6 +1102,7 @@ Value * Func_call_stmt::compile(){
 
                     /// Variable Reference
             if(flag==0){
+             array_sizes.push_back(0);
             is_assign=true;
                 std::string var_name=active_fun + "-" + expr->getName();
               v = expr->compile();
@@ -1030,6 +1119,8 @@ Value * Func_call_stmt::compile(){
         
         if(comma_expr_gen != nullptr) comma_expr_gen->compile();   
     }
+
+
  
 
 
@@ -1061,12 +1152,24 @@ Value * Func_call_stmt::compile(){
     }
 
             keep_variables_values[var_name].push(val);
+     
+
+            
 
         }
    }
+/*
+    for (auto i=0;i<array_sizes.size();i++){
+        std::cout<<array_sizes[i]<<" ";
+    }
+*/
+   // keep_array_sizes.push(array_sizes);
 
     Value * result = Builder.CreateCall(TheModule->getFunction(id.getName()),params);
    
+    //keep_array_sizes.pop();
+   // active_arguments_names.pop();
+
     ///NEED TO POP AND REPLACE IN TheVarsInt - TheVarsChar
       for(const auto& pair: variable_function){
     
@@ -1106,12 +1209,14 @@ Value * Func_call_stmt::compile(){
 Value * Comma_expr_gen::compile(){
    
    Value * v;
+   int size_of_array_char=0;
     
-        
+   
         if(func_ref[header_name][position]==false){ ///PARAMETER NOT REFERENCE
 
          v = expr->compile();
          params.push_back(v);
+         array_sizes.push_back(0);
         }
         
         else{                               ///PARAMETER REFERENCE OR ARRAY
@@ -1121,18 +1226,19 @@ Value * Comma_expr_gen::compile(){
             int flag=0; 
            
             std::string var_name=active_fun + "-" + expr->getName();
-           
+
+
             bool reff=false;
             for(const auto& pair: reference_position){
             if(pair.first==var_name){
                 reff=true;
             }
              }
-
+           
 
 
             if(array_ref[header_name][position]==true){
-                
+                    
                  if(reff){ //////////////ARRAY IS REFERENCE WRONGGGGGGGGGGGGGGGGGGG
                     int pos=reference_position[var_name];
                             Type * intType = Type::getInt32Ty(TheContext);
@@ -1140,6 +1246,17 @@ Value * Comma_expr_gen::compile(){
                             Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
                             params.push_back(v);
                             flag=1;
+                           
+                            int var_type = vartype[var_name];
+                            if(var_type==1){ ///CHAR
+
+                            Type * intType = Type::getInt32Ty(TheContext);
+                            Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArraySizes,c32(pos),"pointerArraytesting");
+                            Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
+                            params.push_back(v);
+                            position++;
+
+                    }
                  }
                 else{
                     
@@ -1156,6 +1273,16 @@ Value * Comma_expr_gen::compile(){
                 else{
              
                     flag=1;
+                    
+                    /*
+                    for(const auto& pair: maparrayint){
+                    //std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+ 
+                    if(pair.first==var_name){
+                          array_sizes.push_back(pair.second);
+                    }
+                    }
+                    */
 
                     v = c32(possible_array.first);//////////IF REF
                      params.push_back(v);
@@ -1165,15 +1292,26 @@ Value * Comma_expr_gen::compile(){
             }
             else
             if(var_type==1){ ///CHAR
+
+                
                 possible_array=find_array(var_name,false);
                 if(possible_array.first==-1){
                     flag=0;
                 }
                 else{
+                   
                     flag=1;
-
+                    for(const auto& pair: maparraychar){
+                    //std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+                   
+                    if(pair.first==var_name){
+                          size_of_array_char=pair.second;
+                    }
+                    }
                     v = c32(possible_array.first);
                     params.push_back(v);
+                    params.push_back(c32(size_of_array_char));
+                    position++;
 
 
                 }
@@ -1183,6 +1321,7 @@ Value * Comma_expr_gen::compile(){
 
                     /// Variable Reference
             if(flag==0){
+             array_sizes.push_back(0);
             is_assign=true;
                 std::string var_name=active_fun + "-" + expr->getName();
               v = expr->compile();
@@ -1315,7 +1454,12 @@ Value * Return::compile(){
 Value * Func_call_expr::compile(){
     
     
-    Value *v;
+     Value *v;
+
+    array_sizes.clear();
+
+    int size_of_array_char=0;
+    
     
     
     this_is_ref.clear();
@@ -1333,6 +1477,7 @@ Value * Func_call_expr::compile(){
 
          v = expr->compile();
          params.push_back(v);
+         array_sizes.push_back(0);
         }
         
         else{                               ///PARAMETER REFERENCE OR ARRAY
@@ -1353,7 +1498,7 @@ Value * Func_call_expr::compile(){
 
 
             if(array_ref[header_name][position]==true){
-                
+          
                  if(reff){ //////////////ARRAY IS REFERENCE WRONGGGGGGGGGGGGGGGGGGG
                     int pos=reference_position[var_name];
                             Type * intType = Type::getInt32Ty(TheContext);
@@ -1361,6 +1506,17 @@ Value * Func_call_expr::compile(){
                             Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
                             params.push_back(v);
                             flag=1;
+
+                    int var_type = vartype[var_name];
+                    if(var_type==1){ ///CHAR
+
+                     Type * intType = Type::getInt32Ty(TheContext);
+                            Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArraySizes,c32(pos),"pointerArraytesting");
+                            Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
+                            params.push_back(v);
+                            position++;
+
+                    }
                  }
                 else{
                     
@@ -1377,6 +1533,18 @@ Value * Func_call_expr::compile(){
                 else{
              
                     flag=1;
+                    
+
+                    /*
+                    for(const auto& pair: maparrayint){
+                    //std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+ 
+                    if(pair.first==var_name){
+                          array_sizes.push_back(pair.second);
+                    }
+                    }
+                    */
+
 
                     v = c32(possible_array.first);//////////IF REF
                      params.push_back(v);
@@ -1391,11 +1559,21 @@ Value * Func_call_expr::compile(){
                     flag=0;
                 }
                 else{
+                   
                     flag=1;
-
+                    
+                    for(const auto& pair: maparraychar){
+                    //std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+                   
+                    if(pair.first==var_name){
+                          size_of_array_char=pair.second;
+                    }
+                    }
+                    
                     v = c32(possible_array.first);
                     params.push_back(v);
-
+                    params.push_back(c32(size_of_array_char));
+                    position++;
 
                 }
             }
@@ -1404,6 +1582,7 @@ Value * Func_call_expr::compile(){
 
                     /// Variable Reference
             if(flag==0){
+             array_sizes.push_back(0);
             is_assign=true;
                 std::string var_name=active_fun + "-" + expr->getName();
               v = expr->compile();
@@ -1418,9 +1597,11 @@ Value * Func_call_expr::compile(){
         }
         position++;
         
-    
+        if(comma_expr_gen != nullptr) comma_expr_gen->compile();   
     }
-    if(comma_expr_gen != nullptr) comma_expr_gen->compile();
+
+
+ 
 
 
     /// NEED TO STORE THE VARIABLES OF THE FUNCTION I CALL
@@ -1451,12 +1632,24 @@ Value * Func_call_expr::compile(){
     }
 
             keep_variables_values[var_name].push(val);
+     
+
+            
 
         }
    }
+/*
+    for (auto i=0;i<array_sizes.size();i++){
+        std::cout<<array_sizes[i]<<" ";
+    }
+*/
+   // keep_array_sizes.push(array_sizes);
 
     Value * result = Builder.CreateCall(TheModule->getFunction(id.getName()),params);
    
+    //keep_array_sizes.pop();
+   // active_arguments_names.pop();
+
     ///NEED TO POP AND REPLACE IN TheVarsInt - TheVarsChar
       for(const auto& pair: variable_function){
     
@@ -1676,6 +1869,11 @@ Value * Const_char::compile() {
         str[1]='`';
         //return c8('\0');
     }
+    if((str[1]=='\\')&&(str[2]=='n')){
+        zero_found=true;
+        str[1]=' ';
+        //return c8('\0');
+    }
     return c8(str[1]);
 }
 
@@ -1743,7 +1941,7 @@ Value * Write_String::compile(){
         else{ ///THIS IS REFERENCE ARRAY
 
    
-
+    /*
          int pos = reference_position[var_name];
          Type * intType = Type::getInt32Ty(TheContext);
          Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArray,c32(pos),"pointerArray");
@@ -1754,9 +1952,135 @@ Value * Write_String::compile(){
           int sizes=word_length[var_name];
 
           if(sizes==0) sizes=200;
-          
-      
+
+          */
         
+
+            int pos = reference_position[var_name];
+              
+              Type * intType = Type::getInt32Ty(TheContext);
+              Value * pointerS =  Builder.CreateGEP(intType,arrayAllocationArraySizes,c32(pos),"pointerArray");
+              Value * length  = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointerS, var_name);
+     
+                Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArray,c32(pos),"pointerArray");
+                Value * v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, "name");
+   
+
+             
+             //   Value *n64 = Builder.CreateSExt(v, i64, "ext");
+              //  Builder.CreateCall(TheWriteInteger, {n64});
+
+
+           
+        
+            Value * count=c32(0);
+
+
+
+            // Save the original insertion point
+           // llvm::BasicBlock OriginalBB = Builder.GetInsertBlock();
+           // llvm::IRBuilderBase::InsertPoint originalInsertPoint = Builder.saveIP();
+
+            for(int i=0;i<200;i++){
+
+            llvm::Value *condValue = length;
+            llvm::Value *cond = Builder.CreateICmpSGT(condValue, c32(0), "if_cond");
+            
+          
+
+
+            llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+            llvm::BasicBlock *ThenBB = llvm::BasicBlock::Create(TheContext, "then", TheFunction);
+            llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(TheContext, "else", TheFunction);
+            llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(TheContext, "endif", TheFunction);
+
+            /* conditional branch, set insert point and save thenValue */
+            Builder.CreateCondBr(cond, ThenBB, ElseBB);
+    
+    
+            Builder.SetInsertPoint(ThenBB);
+
+           //Value *n64 = Builder.CreateSExt(length, i64, "ext");
+           // Builder.CreateCall(TheWriteInteger, {n64});
+         
+
+            Value * word_value = count;
+            Value * new_pos = Builder.CreateAdd(v, word_value, "addtmpString");
+            llvm::PointerType* pointerType = TheVarsChar->getType();
+            Value * ptr = Builder.CreateGEP(pointerType, TheVarsChar, new_pos, "load");
+            Value * result =  Builder.CreateLoad(Type::getInt8Ty(TheContext), ptr, "load");
+
+            Builder.CreateCall(TheWriteChar, {result});
+
+           // Builder.CreateBr(AfterBB);
+  
+          //  Builder.SetInsertPoint(ElseBB);
+          //  return nullptr;
+            
+
+          //Builder.SetInsertPoint(AfterBB);
+          // Builder.SetInsertPoint(activeBB);
+
+            ThenBB = Builder.GetInsertBlock();
+            Builder.CreateBr(AfterBB);
+            Builder.SetInsertPoint(ElseBB);
+            Builder.CreateBr(AfterBB);
+
+           // Builder.CreateRetVoid();
+
+            Builder.SetInsertPoint(AfterBB);
+       
+            length = Builder.CreateSub(length, c32(1), "subtmp1");
+            count = Builder.CreateAdd(count, c32(1), "addtmp1");
+
+           
+
+
+            }
+          // Builder.SetInsertPoint(activeBB);
+
+    /*
+           llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+            llvm::BasicBlock *LoopBB = llvm::BasicBlock::Create(TheContext, "loop", TheFunction);
+            llvm::BasicBlock *BodyBB = llvm::BasicBlock::Create(TheContext, "body", TheFunction);
+            llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(TheContext, "endwhile", TheFunction);
+            Builder.CreateBr(LoopBB);
+            Builder.SetInsertPoint(LoopBB);
+            llvm::Value *condValue = length;
+            llvm::Value *cond = Builder.CreateICmpNE(condValue, c32(0), "while_cond");
+            Builder.CreateCondBr(cond, BodyBB, AfterBB);
+    
+            Builder.SetInsertPoint(BodyBB);
+
+               n64 = Builder.CreateSExt(length, i64, "ext");
+             Builder.CreateCall(TheWriteInteger, {n64});
+            Value * word_value = count;
+            Value * new_pos = Builder.CreateAdd(v, word_value, "addtmpString");
+            llvm::PointerType* pointerType = TheVarsChar->getType();
+            Value * ptr = Builder.CreateGEP(pointerType, TheVarsChar, new_pos, "load");
+            Value * result =  Builder.CreateLoad(Type::getInt8Ty(TheContext), ptr, "load");
+
+             Builder.CreateCall(TheWriteChar, {result});
+
+             length = Builder.CreateSub(length, c32(1), "subtmp1");
+
+             n64 = Builder.CreateSExt(length, i64, "ext");
+             Builder.CreateCall(TheWriteInteger, {n64});
+
+
+             count = Builder.CreateAdd(length, c32(1), "addtmp1");
+
+    
+            Builder.CreateBr(LoopBB);
+ 
+            Builder.SetInsertPoint(AfterBB);
+    */
+            return nullptr;
+
+
+
+        /*
         for(auto i=0 ; i<sizes;i++){
             
             
@@ -1775,12 +2099,12 @@ Value * Write_String::compile(){
             // Convert the result to an integer (0 or 1)
             llvm::Value* check = Builder.CreateZExt(isEqual, llvm::Type::getInt32Ty(TheContext), "result");
             
-            if(check == c32(1))
-            break;
+          
 
 
              Builder.CreateCall(TheWriteChar, {result});
         }
+        */
         
         
        /*
@@ -1941,22 +2265,88 @@ Value * ReadString::compile(){
 }
 
 Value * Strlen::compile(){
-    Value *v = lv->compile();
+
+   
+    ///REFERENCE NOT WORKING ///////
+
+    
+
+
     ////NEED TO CREATE A POINTER TO id
-    //return Builder.CreateCall(TheStrlen,{v});
+
+     std::string name=lv->getName();
+
+
+        std::string var_name = active_fun + "-" + name;
+        std::string new_active_fun=active_fun;
+        while((vars[var_name]==0)&&(maparraychar[var_name]==0)&&(maparrayint[var_name]==0)){
+            
+            new_active_fun = find_parents(new_active_fun);
+            var_name=new_active_fun+"-"+name;
+             
+        }
+
+    Value * v = c32(0);
+
+  
+    //std::vector < std::string > name_list=active_arguments_names.top();
+    //std::vector < int > array_size_list=keep_array_sizes.top();
+    /*
+    int flag=0;
+    for(auto i=0;i<name_list.size();i++){
+        if(var_name==name_list[i]){
+            v = c32(array_size_list[i]);
+            return v;
+        }
+    }
+    */
+   bool is_ref = varref[var_name];
+  
+   if(is_ref){
+
+     int pos = reference_position[var_name];
+              
+              Type * intType = Type::getInt32Ty(TheContext);
+              Value * pointer =  Builder.CreateGEP(intType,arrayAllocationArraySizes,c32(pos),"pointerArray");
+               v = Builder.CreateLoad(Type::getInt32Ty(TheContext), pointer, name);
+     
+     return v;
+   }
+   else{
+    
+
+    for(const auto& pair: maparraychar){
+    //std::cout<<"Array Int Name: " << pair.first << " - Begin Pos "<< counter<<" - Size: " << pair.second<<std::endl;
+    
+    if(pair.first==var_name){
+      v = c32(pair.second);
+      return v;
+    }
+
+    }
+
+    return v;
+   }
+
+    
 }
 
 Value * StrCmp::compile(){
-    Value *v1 = lv1->compile();
-    Value *v2 = lv2->compile();
+    //Value *v1 = lv1->compile();
+    //Value *v2 = lv2->compile();
+    return nullptr;
     
 }
 Value * StrCpy::compile(){
-    Value *v1 = lv1->compile();
-    Value *v2 = lv2->compile();
+    //Value *v1 = lv1->compile();
+    //Value *v2 = lv2->compile();
+        return nullptr;
+
    
 }
 Value * StrCat::compile(){
-    Value *v1 = lv1->compile();
-    Value *v2 = lv2->compile();
+    //Value *v1 = lv1->compile();
+    //Value *v2 = lv2->compile();
+        return nullptr;
+
 }

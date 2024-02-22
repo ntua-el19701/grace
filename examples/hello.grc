@@ -1,13 +1,8 @@
 fun main(): nothing
- var h : int;
-  fun peos(a :int[]; c : char[10]) : nothing 
+ var h : char[10];
+  fun a(a :int[]; c : char[10]) : nothing 
     
-    fun hi(y : int) : nothing
-    {
-      a <-2;  $this should not work,  it should only work if the block is exactly after the func def
-      h <-4;
-      y <- 3; $this should work
-    }
+   
        
   {
      h <-4;
