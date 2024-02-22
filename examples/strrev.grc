@@ -6,7 +6,7 @@ fun main () : nothing
       var i, l : int;
    {
      
-      l <- 7;
+      l <- strlen(s);
       i <- 0;
       while i < l do {
          r[i] <- s[l-i-1];
