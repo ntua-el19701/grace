@@ -1,7 +1,7 @@
 # Compiler for the programming language Grace
 After cloning the code, you should run:
-cd compiler
-make
+cd compiler <br>
+make <br>
 Then in order to run a .grc program you must run these:
 grace <path to .grc program>  temp.ll
 llc -o temp.s temp.ll
