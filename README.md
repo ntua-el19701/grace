@@ -1,7 +1,7 @@
 # Compiler for the programming language Grace
 Team 34: <br>
-Βασίλης Παπαδόπουλος, 03119701 <br>
-Αριστείδης Τζιαπούρας, 03119703
+Βασίλης Παπαδόπουλος, 03119701, vasilis.papadopoulos2000@gmail.com <br>
+Αριστείδης Τζιαπούρας, 03119703, atjiapo@gmail.com
 
 After cloning the code, you should run:
 cd compiler <br>
