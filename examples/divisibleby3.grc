@@ -43,6 +43,8 @@ fun main() : nothing
 
 
 { $ main
+
+  writeString("Give a Number:");
   n <- readInteger();
   writeInteger(n);
   writeString(" is ");
