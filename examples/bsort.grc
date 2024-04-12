@@ -27,10 +27,10 @@ fun main () : nothing
       }
    } $ bsort
 
-   fun writeArray (ref msg : char[]; n : int; ref x : int[]) : nothing
+   fun writeArray ( n : int; ref x : int[]) : nothing
       var i : int;
    {
-      writeString(msg);
+      writeString("Array:");
       i <- 0;
       while i < n do {
          if i > 0 then writeString(", ");
@@ -42,9 +42,10 @@ fun main () : nothing
    
    var seed, i : int;
    var x       : int[16];
-   var w,q : char[20];
+
    
 { $ main
+  
    seed <- 65;
    i <- 0;
    while i < 16 do {
@@ -52,10 +53,9 @@ fun main () : nothing
       x[i] <- seed;
       i <- i+1;
    }
-   w<-"Initial Array: ";
-  
-   writeArray(w, 16, x);
+
+   writeArray(16, x);
    bsort(16, x);
-   q <- "Sorted Array: ";
-   writeArray(q, 16, x);
+   writeArray(16, x);
+
 } $ main
