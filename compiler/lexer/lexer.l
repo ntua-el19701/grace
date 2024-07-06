@@ -77,7 +77,7 @@ PR ({L}|{D}|[ ~!:@.#$%^&*\(\)_+\[\]\|\{\}])
 <COMMENT>"$$"         {BEGIN(INITIAL);}
 <COMMENT>\n           {lineno++;}
 <COMMENT>"$"          {/*nothing*/}
-<COMMENT>[^\n"$$"]*   {/*nothing*/}
+<COMMENT>[^\n$$]*     {/*nothing*/}
 <COMMENT><<EOF>>      { fprintf(stderr, "Unfinished comment at EOF\n"); exit(1); }
 
 \n      { lineno ++;}
