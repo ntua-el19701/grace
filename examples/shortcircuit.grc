@@ -1,4 +1,12 @@
+$$
+  This grace program checks whether the evaluation of the result of the
+  logical operators "and" and "or" uses short-circuiting.
 
+  The program below has 3 functions that return 1 for true and 0 for false.
+  In the main function there are some if-then-else and while-do statements
+  the conditions of which use the said logical operators with two function
+  calls as arguments and that can be short-circuited.
+$$
 
 fun main () : nothing
 
