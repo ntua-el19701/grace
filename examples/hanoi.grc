@@ -31,6 +31,6 @@ fun solve () : nothing
    x2<-"right";
    x3<-"middle";
 
-   hanoi(NumberOfRings,x2,x1,x3);
+   hanoi(NumberOfRings,x1,x2,x3);
 } $ solve
 
