@@ -21,8 +21,9 @@ var x:char[20];
 
 { $ main
 
-   x<-"ferrari";
+   x<-"!dlrow olleH";
    reverse(x);
    writeString(r);
+   writeString("\n");
 } $ main
 
